@@ -1,0 +1,1294 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#2f6fed">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Threads">
+<title>Threads</title>
+<style>
+:root {
+  --bg: #f5f6f8; --panel: #fff; --line: #e2e5ea; --soft: #f0f2f6; --text: #1c2230; --muted: #6b7385;
+  --accent: #2f6fed; --active: #2f6fed; --waiting: #b7791f; --blocked: #d64545; --idea: #7a5af8; --done: #2f9e6a;
+}
+@media (prefers-color-scheme: dark) {
+  :root { --bg: #14171c; --panel: #1c2027; --line: #2c323c; --soft: #252a33; --text: #e4e7ec; --muted: #8b93a3; }
+}
+* { box-sizing: border-box; }
+body { margin: 0; font: 13px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--text); }
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+button, select, input, textarea { font: inherit; color: inherit; }
+button { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 4px 10px; cursor: pointer; }
+button:hover { background: var(--soft); }
+button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+button.danger { color: var(--blocked); }
+input, textarea { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 5px 8px; outline: none; }
+input:focus, textarea:focus { border-color: var(--accent); }
+textarea { resize: none; width: 100%; display: block; overflow: hidden; }
+.muted { color: var(--muted); }
+.spacer { flex: 1; }
+
+header { position: sticky; top: 0; z-index: 20; display: flex; flex-wrap: wrap; row-gap: 8px; gap: 10px; align-items: center; padding: 10px 16px; background: var(--panel); border-bottom: 1px solid var(--line); }
+header h1 { font-size: 15px; margin: 0 6px 0 0; }
+#search { flex: 1 1 120px; max-width: 260px; width: auto; }
+header button, header a, #sync { white-space: nowrap; }
+#filters { display: flex; gap: 4px; }
+#filters button { border-radius: 999px; padding: 3px 10px; font-size: 12px; }
+#filters button.on { background: var(--text); color: var(--panel); border-color: var(--text); }
+#sync { font-size: 12px; color: var(--muted); min-width: 70px; text-align: right; }
+#sync.error { color: var(--blocked); }
+
+.grid { display: grid; grid-template-columns: 20px 14px minmax(220px, 2fr) 100px 110px minmax(160px, 2fr) minmax(220px, 3fr) 64px; gap: 12px; align-items: center; }
+.colhead { position: sticky; top: var(--head, 49px); z-index: 15; padding: 6px 29px; background: var(--bg); color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .05em; }
+main { padding: 0 16px 80px; }
+.empty-state { padding: 60px; text-align: center; color: var(--muted); }
+.section { margin: 10px 0 18px; }
+.section-head { display: flex; align-items: center; gap: 8px; padding: 6px 12px; font-weight: 700; font-size: 13px; cursor: pointer; border-radius: 6px; user-select: none; position: relative; }
+.section-head:hover { background: var(--soft); }
+.section-head .count { color: var(--muted); font-weight: 500; font-size: 12px; }
+.section:not(.collapsed) > .section-head .caret { transform: rotate(90deg); }
+.section-empty { padding: 14px; text-align: center; color: var(--muted); font-size: 12px; border: 1px dashed var(--line); border-radius: 8px; margin: 6px 0; }
+
+.thread { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; margin: 6px 0; position: relative; }
+.thread.open { box-shadow: 0 2px 10px rgba(0,0,0,.06); }
+.thread.flash { animation: flash 1.2s ease; }
+@keyframes flash { 0%, 40% { box-shadow: 0 0 0 3px var(--accent); } 100% { box-shadow: none; } }
+.row { padding: 8px 12px; cursor: pointer; min-height: 40px; }
+.title { font-weight: 600; display: flex; align-items: center; gap: 6px; min-width: 0; }
+.title-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.title input { width: 100%; font-weight: 600; }
+.edit { flex: none; display: inline-flex; border: 0; background: none; padding: 3px; border-radius: 4px; color: var(--muted); opacity: 0; cursor: pointer; }
+.row:hover .edit { opacity: .7; }
+.edit:hover { opacity: 1; color: var(--accent); background: var(--soft); }
+.edit svg { width: 14px; height: 14px; }
+.clip { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.when { color: var(--muted); font-size: 11px; margin-right: 4px; }
+.updated { text-align: right; font-size: 12px; }
+
+.caret { width: 0; height: 0; border: 5px solid transparent; border-left: 6px solid var(--muted); transition: transform .12s; transform-origin: 3px 5px; }
+.open > .row .caret { transform: rotate(90deg); }
+.grip { width: 14px; height: 24px; cursor: grab; opacity: .5; border-radius: 4px; background-image: radial-gradient(circle, var(--muted) 1.6px, transparent 1.9px); background-size: 7px 6px; background-position: 0 0; }
+.grip:hover { opacity: 1; background-color: var(--soft); }
+.row .title[draggable="true"] { cursor: grab; padding: 6px 0; }
+.grip:active, .row .title[draggable="true"]:active { cursor: grabbing; }
+
+select.status { appearance: none; border: 0; border-radius: 999px; padding: 2px 10px; font-size: 12px; font-weight: 600; cursor: pointer; text-align: center; color: #fff; }
+.s-active { background: var(--active); } .s-waiting { background: var(--waiting); } .s-blocked { background: var(--blocked); }
+.s-idea { background: var(--idea); } .s-done { background: var(--done); }
+.progress { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); }
+.bar { flex: 1; height: 5px; background: var(--soft); border-radius: 3px; overflow: hidden; }
+.bar i { display: block; height: 100%; background: var(--done); }
+
+.panel { display: grid; grid-template-columns: 1fr 1.25fr 1fr; border-top: 1px solid var(--line); }
+.col { padding: 10px 14px 12px; border-right: 1px solid var(--line); min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.col:last-child { border-right: 0; }
+.col h3 { margin: 0; font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); display: flex; justify-content: space-between; }
+.list { display: flex; flex-direction: column; gap: 1px; min-height: 30px; border-radius: 6px; }
+.list .empty { color: var(--muted); font-size: 12px; padding: 6px; border: 1px dashed var(--line); border-radius: 6px; text-align: center; }
+.panel-foot { display: flex; gap: 8px; align-items: center; padding: 8px 14px; border-top: 1px solid var(--line); font-size: 12px; }
+
+.item { display: flex; gap: 6px; align-items: flex-start; padding: 4px 6px; border-radius: 6px; position: relative; }
+.item:hover { background: var(--soft); }
+.item .grip { width: 14px; height: 18px; margin-top: 0; opacity: .25; flex: none; }
+.item:hover .grip { opacity: .6; }
+.item .grip:hover { opacity: 1; }
+.item input[type=checkbox] { margin: 3px 0 0; flex: none; cursor: pointer; }
+.item .body { flex: 1; min-width: 0; cursor: text; }
+.item .text { white-space: pre-wrap; word-break: break-word; }
+.item.done .text { text-decoration: line-through; color: var(--muted); }
+.item .meta { display: flex; flex-wrap: wrap; gap: 4px 8px; font-size: 11px; color: var(--muted); margin-top: 2px; }
+.item .x { opacity: 0; border: 0; background: none; color: var(--muted); padding: 0 4px; }
+.item:hover .x { opacity: 1; }
+.item .x:hover { color: var(--blocked); }
+.k-decision { border-left: 3px solid var(--idea); }
+.k-note .text { color: var(--text); }
+.dragging { opacity: .4; }
+
+.chip { display: inline-flex; align-items: center; gap: 4px; padding: 0 7px; border-radius: 999px; background: var(--soft); border: 1px solid var(--line); font-size: 11px; color: var(--text); cursor: pointer; max-width: 240px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.chip.ref::before { content: "@"; color: var(--accent); font-weight: 700; }
+.chip button { border: 0; background: none; padding: 0; color: var(--muted); }
+
+.editor { flex: 1; display: flex; flex-direction: column; gap: 4px; }
+.editor .row2 { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.editor .e-link { flex: 1; min-width: 160px; font-size: 12px; }
+.editor select { font-size: 12px; border: 1px solid var(--line); border-radius: 6px; background: var(--panel); padding: 3px; }
+.hint { font-size: 11px; color: var(--muted); }
+.editor button { padding: 2px 10px; font-size: 12px; }
+.add-form { display: flex; gap: 6px; align-items: flex-start; margin: 0; }
+.add-form > input, .add-form > textarea { flex: 1; min-width: 0; }
+.add-btn { display: none; flex: none; }
+.add-form:focus-within .add-btn { display: inline-block; }
+@media (hover: none) { .add-btn { display: inline-block; } }
+.title-form { flex: 1; margin: 0; }
+
+.drop-before::before, .drop-after::after { content: ""; position: absolute; left: 0; right: 0; height: 2px; background: var(--accent); border-radius: 2px; }
+.drop-before::before { top: -2px; }
+.drop-after::after { bottom: -2px; }
+.drop-into { outline: 2px dashed var(--accent); outline-offset: 2px; }
+
+#toast { position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%); background: var(--text); color: var(--panel); padding: 8px 14px; border-radius: 8px; display: none; gap: 12px; align-items: center; z-index: 30; }
+#toast button { background: none; border: 1px solid currentColor; color: inherit; }
+
+[data-drag] { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
+.ghost { position: fixed; top: 0; left: 0; z-index: 50; pointer-events: none; background: var(--panel); border: 1px solid var(--accent); border-radius: 8px; box-shadow: 0 8px 24px rgba(0,0,0,.18); opacity: .95; }
+body.touch-dragging { -webkit-user-select: none; user-select: none; }
+
+@media (hover: none) {
+  .edit { opacity: .7; padding: 6px; }
+  .edit svg { width: 16px; height: 16px; }
+  .item .grip { opacity: .5; width: 20px; height: 24px; }
+  .item .x { opacity: .7; padding: 2px 8px; font-size: 15px; }
+  .item input[type=checkbox] { width: 20px; height: 20px; margin-top: 0; }
+  .grip { width: 20px; height: 30px; }
+  .kbd { display: none; }
+}
+
+@media (max-width: 1000px) {
+  .grid { grid-template-columns: 20px 14px 1fr 90px 90px; }
+  .grid > .next, .grid > .latest, .grid > .updated { display: none; }
+  .panel { grid-template-columns: 1fr; }
+  .col { border-right: 0; border-bottom: 1px solid var(--line); }
+}
+
+@media (max-width: 700px) {
+  input, textarea, select, button { font-size: 16px; }
+  header { flex-wrap: wrap; gap: 8px; padding: 8px 10px; }
+  header h1 { font-size: 16px; }
+  #search { order: 10; flex: 1 1 100%; width: auto; }
+  #filters { order: 11; flex: 1 1 100%; overflow-x: auto; flex-wrap: nowrap; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+  #filters button { flex: none; font-size: 13px; padding: 4px 12px; }
+  #expandAll, #collapseAll { display: none; }
+  .colhead { display: none; }
+  main { padding: 0 8px 80px; }
+  .grid { grid-template-columns: 20px 14px 1fr auto; row-gap: 3px; column-gap: 8px; }
+  .grid > .progress { grid-column: 3; }
+  .grid > .updated { display: block; grid-column: 4; }
+  .grid > .next, .grid > .latest { display: block; grid-column: 3 / -1; font-size: 12px; color: var(--muted); }
+  .grid > .next:not(:empty)::before { content: "Next: "; font-weight: 600; }
+  .grid > .next:empty, .grid > .latest:empty { display: none; }
+  .row { padding: 10px; }
+  select.status { font-size: 13px; padding: 4px 10px; }
+  .col { padding: 10px; }
+  .panel-foot { flex-wrap: wrap; padding: 8px 10px; }
+  .chip { max-width: 70vw; }
+}
+</style>
+</head>
+<body>
+<header>
+  <h1>Threads</h1>
+  <input id="search" placeholder="Search  ( / )">
+  <div id="filters"></div>
+  <span class="spacer"></span>
+  <button id="expandAll">Expand all</button>
+  <button id="collapseAll">Collapse all</button>
+  <a id="sheetLink" target="_blank" rel="noopener" style="display:none">Sheet</a>
+  <span id="sync"></span>
+  <button id="newThread" class="primary">+ New<span class="kbd"> thread ( n )</span></button>
+</header>
+<div class="grid colhead"><span></span><span></span><span>Thread</span><span>Status</span><span>Progress</span><span class="next">Next</span><span class="latest">Latest note</span><span class="updated">Updated</span></div>
+<main id="list"></main>
+<div id="toast"><span id="toastMsg"></span><button id="undo">Undo</button></div>
+
+<script src="pwa.js"></script>
+<script>
+const JIRA_BROWSE = '';
+const STATUSES = ['active', 'waiting', 'blocked', 'idea', 'done'];
+const FILTERS = ['open', 'all'].concat(STATUSES);
+const KINDS = { task: 'Subtasks', note: 'Notes', decision: 'Decisions' };
+const SECTIONS = [{ id: 'now', label: 'Now' }, { id: 'later', label: 'Later' }];
+const SECTION_IDS = SECTIONS.map((s) => s.id);
+const NEWEST_FIRST = { task: false, note: true, decision: true };
+
+const hasGas = typeof google !== 'undefined' && google.script && google.script.run;
+const api = hasGas ? {
+  load: () => new Promise((res, rej) => google.script.run.withSuccessHandler(res).withFailureHandler(rej).loadAll()),
+  apply: (ops) => new Promise((res, rej) => google.script.run.withSuccessHandler(res).withFailureHandler(rej).applyOps(ops)),
+} : window.ThreadsRemoteApi ? window.ThreadsRemoteApi : {
+  async load() {
+    if (window.mockOffline) throw new Error('offline');
+    const db = JSON.parse(localStorage.getItem('threads-db') || '{"threads":[],"items":[]}');
+    return { threads: db.threads, items: db.items, meta: {} };
+  },
+  async apply(ops) {
+    if (window.mockOffline) throw new Error('offline');
+    const db = JSON.parse(localStorage.getItem('threads-db') || '{"threads":[],"items":[]}');
+    ops.forEach((op) => {
+      const list = op.table === 'Threads' ? db.threads : db.items;
+      const id = op.type === 'delete' ? op.id : op.record.id;
+      const i = list.findIndex((r) => r.id === id);
+      if (op.type === 'delete') { if (i >= 0) list.splice(i, 1); }
+      else if (i >= 0) list[i] = op.record;
+      else list.push(op.record);
+    });
+    localStorage.setItem('threads-db', JSON.stringify(db));
+    return true;
+  },
+};
+
+const ui = loadUi();
+let threads = [];
+let items = [];
+let editingThread = null;
+let editingItem = null;
+let editDraft = null;
+let pendingFocus = null;
+let rendering = false;
+let lastLoad = 0;
+let drag = null;
+let dropMark = null;
+let lastDeleted = null;
+let toastTimer = null;
+
+function loadUi() {
+  try {
+    const s = JSON.parse(localStorage.getItem('threads-ui') || '{}');
+    return { filter: s.filter || 'open', expanded: new Set(s.expanded || []), collapsedSections: new Set(s.collapsedSections || []) };
+  } catch (e) {
+    return { filter: 'open', expanded: new Set(), collapsedSections: new Set() };
+  }
+}
+
+function saveUi() {
+  try {
+    localStorage.setItem('threads-ui', JSON.stringify({ filter: ui.filter, expanded: [...ui.expanded], collapsedSections: [...ui.collapsedSections] }));
+  } catch (e) {}
+}
+
+const now = () => new Date().toISOString();
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const num = (v, d) => (v === '' || v == null || isNaN(Number(v)) ? d : Number(v));
+
+function normThread(r) {
+  return {
+    id: String(r.id), title: String(r.title || ''),
+    status: STATUSES.includes(r.status) ? r.status : 'active',
+    position: num(r.position, 0), created: r.created || '', updated: r.updated || r.created || '',
+    section: SECTION_IDS.includes(r.section) ? r.section : 'now',
+  };
+}
+
+function normItem(r) {
+  return {
+    id: String(r.id), threadId: String(r.threadId || ''),
+    kind: KINDS[r.kind] ? r.kind : 'note', text: String(r.text || ''),
+    done: r.done === true || String(r.done).toUpperCase() === 'TRUE',
+    link: String(r.link || ''),
+    refs: String(r.refs || '').split(',').map((s) => s.trim()).filter(Boolean),
+    position: num(r.position, 0), created: r.created || '', updated: r.updated || r.created || '',
+  };
+}
+
+const pending = new Map();
+const PENDING_KEY = 'threads-pending';
+const CACHE_KEY = 'threads-cache';
+let flushTimer = null;
+let cacheTimer = null;
+let inFlight = null;
+let failed = false;
+let offline = false;
+let durable = true;
+let loading = false;
+let cachedAt = '';
+
+function opKey(op) { return op.table + ':' + (op.type === 'delete' ? op.id : op.record.id); }
+
+function queueUpsert(table, rec) {
+  const record = Object.assign({}, rec);
+  if (Array.isArray(record.refs)) record.refs = record.refs.join(',');
+  if (typeof record.done === 'boolean') record.done = record.done ? 'TRUE' : 'FALSE';
+  pending.set(table + ':' + rec.id, { type: 'upsert', table, record });
+  changed();
+}
+
+function queueDelete(table, id) {
+  pending.set(table + ':' + id, { type: 'delete', table, id });
+  changed();
+}
+
+function changed() {
+  persistPending();
+  clearTimeout(cacheTimer);
+  cacheTimer = setTimeout(saveCache, 500);
+  scheduleFlush(400);
+}
+
+function saveThread(t) { t.updated = now(); queueUpsert('Threads', t); }
+function saveItem(i) { i.updated = now(); queueUpsert('Items', i); }
+
+function storeSet(key, value) {
+  try {
+    localStorage.setItem(key, JSON.stringify(value));
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
+function storeGet(key) {
+  try {
+    return JSON.parse(localStorage.getItem(key) || 'null');
+  } catch (e) {
+    return null;
+  }
+}
+
+function persistPending() {
+  durable = storeSet(PENDING_KEY, (inFlight || []).concat([...pending.values()]));
+}
+
+function saveCache() {
+  const sheetLink = document.getElementById('sheetLink');
+  storeSet(CACHE_KEY, { at: now(), threads, items, sheetUrl: sheetLink.style.display === 'none' ? '' : sheetLink.href });
+}
+
+function restorePending() {
+  (storeGet(PENDING_KEY) || []).forEach((op) => { if (!pending.has(opKey(op))) pending.set(opKey(op), op); });
+}
+
+function overlayPending() {
+  (inFlight || []).concat([...pending.values()]).forEach((op) => {
+    const list = op.table === 'Threads' ? threads : items;
+    const id = op.type === 'delete' ? op.id : String(op.record.id);
+    const idx = list.findIndex((r) => r.id === id);
+    if (op.type === 'delete') {
+      if (idx >= 0) list.splice(idx, 1);
+      return;
+    }
+    const rec = op.table === 'Threads' ? normThread(op.record) : normItem(op.record);
+    if (idx >= 0) list[idx] = rec;
+    else list.push(rec);
+  });
+}
+
+function scheduleFlush(ms) {
+  setSync();
+  clearTimeout(flushTimer);
+  flushTimer = setTimeout(flush, ms);
+}
+
+function withTimeout(promise, ms) {
+  return Promise.race([promise, new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), ms))]);
+}
+
+async function flush() {
+  if (inFlight) return scheduleFlush(300);
+  if (!pending.size) return setSync();
+  const ops = [...pending.values()];
+  pending.clear();
+  inFlight = ops;
+  persistPending();
+  let ok = false;
+  try {
+    await withTimeout(api.apply(ops), 30000);
+    ok = true;
+  } catch (err) {
+    ops.forEach((op) => { if (!pending.has(opKey(op))) pending.set(opKey(op), op); });
+    console.error(err);
+  }
+  inFlight = null;
+  persistPending();
+  failed = !ok;
+  const wasOffline = offline;
+  if (ok) offline = false;
+  if (pending.size) scheduleFlush(ok ? 300 : 5000);
+  else setSync();
+  if (ok && wasOffline && !pending.size) load();
+}
+
+function setSync() {
+  const el = document.getElementById('sync');
+  const n = pending.size + (inFlight ? inFlight.length : 0);
+  let text;
+  if (loading && !threads.length) text = 'Loading...';
+  else if (offline || failed) text = n ? 'Offline, ' + n + ' waiting' : 'Offline';
+  else if (n) text = 'Saving...';
+  else text = loading ? 'Refreshing...' : 'Saved';
+  el.className = offline || failed ? 'error' : '';
+  el.textContent = text;
+  el.title = offline || failed ? (n ? n + ' change' + (n === 1 ? '' : 's') + ' saved on this device, will sync when back online. ' : 'Showing the copy saved on this device. ') + (cachedAt ? 'Last synced ' + stamp(cachedAt) + '.' : '') : '';
+}
+
+function threadById(id) { return threads.find((t) => t.id === id); }
+function itemById(id) { return items.find((i) => i.id === id); }
+
+function itemsOf(threadId, kind) {
+  return items.filter((i) => i.threadId === threadId && i.kind === kind).sort((a, b) => a.position - b.position);
+}
+
+function sortedThreads() {
+  return threads.slice().sort((a, b) => SECTION_IDS.indexOf(a.section) - SECTION_IDS.indexOf(b.section) || a.position - b.position);
+}
+
+function lastTouched(t) {
+  return items.reduce((m, i) => (i.threadId === t.id && i.updated > m ? i.updated : m), t.updated || '');
+}
+
+function visibleThreads() {
+  const q = document.getElementById('search').value.trim().toLowerCase();
+  return sortedThreads().filter((t) => {
+    if (ui.filter === 'open' && t.status === 'done') return false;
+    if (ui.filter !== 'open' && ui.filter !== 'all' && t.status !== ui.filter) return false;
+    if (!q) return true;
+    if (t.title.toLowerCase().includes(q)) return true;
+    return items.some((i) => i.threadId === t.id && (i.text + ' ' + i.link).toLowerCase().includes(q));
+  });
+}
+
+function ago(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  if (isNaN(d)) return '';
+  const s = (Date.now() - d.getTime()) / 1000;
+  if (s < 60) return 'now';
+  if (s < 3600) return Math.floor(s / 60) + 'm';
+  if (s < 86400) return Math.floor(s / 3600) + 'h';
+  if (s < 86400 * 14) return Math.floor(s / 86400) + 'd';
+  return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+}
+
+function stamp(iso) {
+  const d = new Date(iso);
+  if (!iso || isNaN(d)) return '';
+  return d.toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+}
+
+function shortUrl(url) {
+  let m = url.match(/\/pull\/(\d+)/);
+  if (m) return 'PR ' + m[1];
+  m = url.match(/\/browse\/([A-Z][A-Z0-9]+-\d+)/);
+  if (m) return m[1];
+  if (/docs\.google\.com\/document/.test(url)) return 'Doc';
+  if (/docs\.google\.com\/spreadsheets/.test(url)) return 'Sheet';
+  if (/docs\.google\.com\/presentation/.test(url)) return 'Slides';
+  if (/slack\.com/.test(url)) return 'Slack';
+  try {
+    const u = new URL(url);
+    const path = u.pathname.length > 1 ? u.pathname.slice(0, 18) + (u.pathname.length > 18 ? '...' : '') : '';
+    return u.hostname.replace(/^www\./, '') + path;
+  } catch (e) {
+    return url.slice(0, 30);
+  }
+}
+
+function linkify(text) {
+  return esc(text).replace(/(https?:\/\/[^\s<]+)|\b([A-Z][A-Z0-9]{1,9}-\d+)\b/g, (m, url, key) => {
+    if (url) return '<a href="' + url + '" target="_blank" rel="noopener">' + esc(shortUrl(url.replace(/&amp;/g, '&'))) + '</a>';
+    if (!JIRA_BROWSE) return key;
+    return '<a href="' + JIRA_BROWSE + key + '" target="_blank" rel="noopener">' + key + '</a>';
+  });
+}
+
+function firstLine(s) { return String(s).split('\n')[0]; }
+
+function render() {
+  const keep = {};
+  document.querySelectorAll('[data-add]').forEach((el) => { if (el.value) keep[el.dataset.focus] = el.value; });
+  const active = document.activeElement;
+  let focusKey = pendingFocus;
+  let sel = null;
+  if (!focusKey && active && active.dataset && active.dataset.focus) {
+    focusKey = active.dataset.focus;
+    if ('selectionStart' in active) sel = [active.selectionStart, active.selectionEnd];
+  }
+  pendingFocus = null;
+
+  rendering = true;
+  document.getElementById('filters').innerHTML = FILTERS.map((f) =>
+    '<button data-filter="' + f + '" class="' + (ui.filter === f ? 'on' : '') + '">' + f[0].toUpperCase() + f.slice(1) + '</button>').join('');
+  const list = visibleThreads();
+  document.getElementById('list').innerHTML = threads.length ? SECTIONS.map((s) => sectionHtml(s, list.filter((t) => t.section === s.id))).join('')
+    : '<div class="empty-state">No threads yet. Press <b>n</b> or click <b>+ New thread</b>.</div>';
+
+  Object.keys(keep).forEach((k) => {
+    const el = document.querySelector('[data-focus="' + k + '"]');
+    if (el && !el.value) el.value = keep[k];
+  });
+  document.querySelectorAll('textarea').forEach(autosize);
+  if (focusKey) {
+    const el = document.querySelector('[data-focus="' + focusKey + '"]');
+    if (el) {
+      el.focus();
+      if (sel && 'setSelectionRange' in el) el.setSelectionRange(sel[0], sel[1]);
+      else if ('setSelectionRange' in el && el.value != null) el.setSelectionRange(el.value.length, el.value.length);
+    }
+  }
+  rendering = false;
+}
+
+function autosize(el) {
+  el.style.height = 'auto';
+  el.style.height = el.scrollHeight + 2 + 'px';
+}
+
+function sectionHtml(s, list) {
+  const collapsed = ui.collapsedSections.has(s.id);
+  return '<div class="section' + (collapsed ? ' collapsed' : '') + '" data-section="' + s.id + '">'
+    + '<div class="section-head" data-action="toggle-section"><span class="caret"></span><span>' + s.label + '</span><span class="count">' + list.length + '</span></div>'
+    + (collapsed ? '' : list.length ? list.map(threadHtml).join('') : '<div class="section-empty">Nothing here. Drag threads in.</div>')
+    + '</div>';
+}
+
+function threadHtml(t) {
+  const open = ui.expanded.has(t.id);
+  const subs = itemsOf(t.id, 'task');
+  const done = subs.filter((i) => i.done).length;
+  const next = subs.find((i) => !i.done);
+  const latest = items.filter((i) => i.threadId === t.id && i.kind === 'note').sort((a, b) => (a.created < b.created ? 1 : -1))[0];
+  const title = editingThread === t.id
+    ? '<form class="title-form" data-title-form="' + t.id + '"><input class="title-input" data-focus="title:' + t.id + '" value="' + esc(t.title) + '" placeholder="Thread name" enterkeyhint="done"></form>'
+    : '<span class="title-text">' + (t.title ? esc(t.title) : '<span class="muted">Untitled</span>') + '</span>'
+      + '<button class="edit" data-action="rename" draggable="false" title="Rename">'
+      + '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M11 2.5l2.5 2.5L5.5 13H3v-2.5z"/><path d="M9.5 4l2.5 2.5"/></svg>'
+      + '</button>';
+  const progress = subs.length
+    ? '<span class="bar"><i style="width:' + Math.round((done / subs.length) * 100) + '%"></i></span><span>' + done + '/' + subs.length + '</span>'
+    : '<span class="muted">-</span>';
+  return '<section class="thread' + (open ? ' open' : '') + '" data-thread="' + t.id + '">'
+    + '<div class="row grid" data-action="toggle">'
+    + '<span class="grip" draggable="true" data-drag="thread" data-id="' + t.id + '" title="Drag to reorder"></span>'
+    + '<span class="caret"></span>'
+    + (editingThread === t.id
+      ? '<div class="title">' + title + '</div>'
+      : '<div class="title" draggable="true" data-drag="thread" data-id="' + t.id + '" title="Drag to reorder, double-click to rename">' + title + '</div>')
+    + '<select class="status s-' + t.status + '" data-action="status">' + STATUSES.map((s) => '<option value="' + s + '"' + (s === t.status ? ' selected' : '') + '>' + s + '</option>').join('') + '</select>'
+    + '<div class="progress">' + progress + '</div>'
+    + '<div class="next clip">' + (next ? linkify(firstLine(next.text)) : '') + '</div>'
+    + '<div class="latest clip">' + (latest ? '<span class="when">' + ago(latest.created) + '</span>' + linkify(firstLine(latest.text)) : '') + '</div>'
+    + '<div class="updated muted">' + ago(lastTouched(t)) + '</div>'
+    + '</div>'
+    + (open ? panelHtml(t) : '')
+    + '</section>';
+}
+
+function panelHtml(t) {
+  const backlinks = items.filter((i) => i.threadId !== t.id && i.refs.includes(t.id));
+  return '<div class="panel">' + Object.keys(KINDS).map((k) => columnHtml(t, k)).join('') + '</div>'
+    + '<div class="panel-foot">'
+    + (backlinks.length ? '<span class="muted">Referenced by</span>' + backlinks.map((i) => {
+      const src = threadById(i.threadId);
+      return '<span class="chip" data-goto="' + i.threadId + '" title="' + esc(i.text) + '">' + esc((src ? src.title : '?') + ': ' + firstLine(i.text).slice(0, 40)) + '</span>';
+    }).join('') : '')
+    + '<span class="spacer"></span>'
+    + SECTIONS.filter((s) => s.id !== t.section).map((s) => '<button data-action="move-section" data-section="' + s.id + '">Move to ' + s.label + '</button>').join('')
+    + '<button data-action="rename">Rename</button>'
+    + '<button class="danger" data-action="delete-thread">Delete thread</button>'
+    + '</div>';
+}
+
+function columnHtml(t, kind) {
+  const list = itemsOf(t.id, kind);
+  const key = 'add:' + t.id + ':' + kind;
+  const field = kind === 'task'
+    ? '<input data-add="task" data-focus="' + key + '" placeholder="Add subtask" enterkeyhint="done" autocomplete="off">'
+    : '<textarea rows="1" data-add="' + kind + '" data-focus="' + key + '" placeholder="' + (kind === 'note' ? 'Add note' : 'Record decision') + '"></textarea>';
+  const add = '<form class="add-form" data-add-form="' + kind + '">' + field + '<button type="submit" class="add-btn">Add</button></form>';
+  const count = kind === 'task' && list.length ? list.filter((i) => i.done).length + '/' + list.length : (list.length || '');
+  return '<div class="col">'
+    + '<h3><span>' + KINDS[kind] + '</span><span>' + count + '</span></h3>'
+    + (NEWEST_FIRST[kind] ? add : '')
+    + '<div class="list" data-list="' + kind + '" data-thread="' + t.id + '">'
+    + (list.length ? list.map(itemHtml).join('') : '<div class="empty">Nothing yet, or drop here</div>')
+    + '</div>'
+    + (NEWEST_FIRST[kind] ? '' : add)
+    + '</div>';
+}
+
+function itemHtml(i) {
+  if (editingItem === i.id) return editorHtml(i);
+  const meta = [];
+  if (i.kind !== 'task' && i.created) meta.push('<span>' + stamp(i.created) + '</span>');
+  if (i.link) meta.push('<a class="chip" href="' + esc(i.link) + '" target="_blank" rel="noopener">' + esc(shortUrl(i.link)) + '</a>');
+  i.refs.forEach((r) => {
+    const t = threadById(r);
+    meta.push('<span class="chip ref" data-goto="' + r + '">' + esc(t ? t.title || 'Untitled' : 'missing') + '</span>');
+  });
+  return '<div class="item k-' + i.kind + (i.done ? ' done' : '') + '" data-item="' + i.id + '">'
+    + '<span class="grip" draggable="true" data-drag="item" data-id="' + i.id + '" title="Drag to reorder or move"></span>'
+    + (i.kind === 'task' ? '<input type="checkbox" data-action="check"' + (i.done ? ' checked' : '') + '>' : '')
+    + '<div class="body" data-action="edit-item"><div class="text">' + linkify(i.text) + '</div>'
+    + (meta.length ? '<div class="meta">' + meta.join('') + '</div>' : '')
+    + '</div>'
+    + '<button class="x" data-action="delete-item" title="Delete">x</button>'
+    + '</div>';
+}
+
+function editorHtml(i) {
+  const d = editDraft;
+  const options = sortedThreads().filter((t) => t.id !== i.threadId && !d.refs.includes(t.id))
+    .map((t) => '<option value="' + t.id + '">' + esc(t.title || 'Untitled') + '</option>').join('');
+  return '<div class="item k-' + i.kind + '" data-item="' + i.id + '">'
+    + '<div class="editor" data-editor="' + i.id + '">'
+    + '<textarea class="e-text" data-focus="edit:' + i.id + '" rows="1">' + esc(d.text) + '</textarea>'
+    + '<div class="row2">'
+    + '<input class="e-link" data-focus="link:' + i.id + '" placeholder="Link URL (PR, ticket, doc)" value="' + esc(d.link) + '">'
+    + d.refs.map((r) => {
+      const t = threadById(r);
+      return '<span class="chip ref">' + esc(t ? t.title || 'Untitled' : 'missing') + '<button data-action="unref" data-ref="' + r + '">x</button></span>';
+    }).join('')
+    + (options ? '<select data-action="addref"><option value="">+ Link thread</option>' + options + '</select>' : '')
+    + '</div>'
+    + '<div class="row2"><button data-action="save-edit" class="primary">Save</button><button data-action="cancel-edit">Cancel</button>'
+    + '<span class="hint">Enter saves, Shift+Enter newline, Esc cancels. Empty text deletes.</span></div>'
+    + '</div></div>';
+}
+
+function toggle(id) {
+  if (ui.expanded.has(id)) ui.expanded.delete(id);
+  else ui.expanded.add(id);
+  saveUi();
+  render();
+}
+
+function goto(id) {
+  const t = threadById(id);
+  if (!t) return;
+  if (!visibleThreads().includes(t)) {
+    ui.filter = 'all';
+    document.getElementById('search').value = '';
+  }
+  ui.expanded.add(id);
+  ui.collapsedSections.delete(t.section);
+  saveUi();
+  render();
+  const el = document.querySelector('[data-thread="' + id + '"]');
+  if (el) {
+    el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    el.classList.add('flash');
+    setTimeout(() => el.classList.remove('flash'), 1300);
+  }
+}
+
+function newThread() {
+  const min = threads.filter((t) => t.section === 'now').reduce((m, t) => Math.min(m, t.position), 1);
+  const t = { id: uid(), title: '', status: 'active', position: min - 1, created: now(), updated: now(), section: 'now' };
+  threads.push(t);
+  ui.expanded.add(t.id);
+  ui.collapsedSections.delete('now');
+  if (ui.filter !== 'open' && ui.filter !== 'all' && ui.filter !== 'active') ui.filter = 'open';
+  document.getElementById('search').value = '';
+  saveUi();
+  editingThread = t.id;
+  pendingFocus = 'title:' + t.id;
+  render();
+  window.scrollTo({ top: 0 });
+}
+
+function commitTitle(id, value, cancel) {
+  const t = threadById(id);
+  editingThread = null;
+  if (!t) return render();
+  const title = cancel ? t.title : value.trim();
+  if (!title && !t.title && !items.some((i) => i.threadId === id)) {
+    threads = threads.filter((x) => x !== t);
+    if (t.created) queueDelete('Threads', id);
+  } else if (title && title !== t.title) {
+    t.title = title;
+    saveThread(t);
+  } else if (!title && !t.title) {
+    saveThread(t);
+  }
+  render();
+}
+
+function addItem(threadId, kind, text) {
+  text = text.trim();
+  if (!text) return;
+  const sibs = itemsOf(threadId, kind);
+  const position = NEWEST_FIRST[kind]
+    ? sibs.reduce((m, i) => Math.min(m, i.position), 1) - 1
+    : sibs.reduce((m, i) => Math.max(m, i.position), -1) + 1;
+  const i = normItem({ id: uid(), threadId, kind, text, done: false, position, created: now() });
+  items.push(i);
+  saveItem(i);
+  const t = threadById(threadId);
+  if (t && !t.title) saveThread(t);
+  pendingFocus = 'add:' + threadId + ':' + kind;
+  render();
+}
+
+function startEdit(id) {
+  const i = itemById(id);
+  if (!i) return;
+  editingItem = id;
+  editDraft = { text: i.text, link: i.link, refs: i.refs.slice() };
+  pendingFocus = 'edit:' + id;
+  render();
+}
+
+function commitEdit(cancel) {
+  const i = itemById(editingItem);
+  const d = editDraft;
+  editingItem = null;
+  editDraft = null;
+  if (i && !cancel) {
+    if (!d.text.trim()) {
+      removeItems([i]);
+      return;
+    }
+    const changed = d.text !== i.text || d.link.trim() !== i.link || d.refs.join(',') !== i.refs.join(',');
+    if (changed) {
+      i.text = d.text;
+      i.link = d.link.trim();
+      i.refs = d.refs;
+      saveItem(i);
+    }
+  }
+  render();
+}
+
+function removeItems(list, threadList) {
+  threadList = threadList || [];
+  lastDeleted = { items: list.map((i) => Object.assign({}, i)), threads: threadList.map((t) => Object.assign({}, t)) };
+  const ids = new Set(list.map((i) => i.id));
+  items = items.filter((i) => !ids.has(i.id));
+  list.forEach((i) => queueDelete('Items', i.id));
+  const tids = new Set(threadList.map((t) => t.id));
+  threads = threads.filter((t) => !tids.has(t.id));
+  threadList.forEach((t) => queueDelete('Threads', t.id));
+  const what = threadList.length ? 'Deleted thread "' + (threadList[0].title || 'Untitled') + '"' : 'Deleted ' + (list.length === 1 ? list[0].kind : list.length + ' items');
+  showToast(what);
+  render();
+}
+
+function undoDelete() {
+  if (!lastDeleted) return;
+  lastDeleted.threads.forEach((t) => { threads.push(t); queueUpsert('Threads', t); });
+  lastDeleted.items.forEach((i) => { items.push(i); queueUpsert('Items', i); });
+  lastDeleted = null;
+  hideToast();
+  render();
+}
+
+function showToast(msg) {
+  document.getElementById('toastMsg').textContent = msg;
+  document.getElementById('toast').style.display = 'flex';
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(hideToast, 8000);
+}
+
+function hideToast() { document.getElementById('toast').style.display = 'none'; }
+
+function renumber(list, save) {
+  list.forEach((rec, idx) => {
+    if (rec.position !== idx) {
+      rec.position = idx;
+      save(rec);
+    }
+  });
+}
+
+function moveThread(id, targetId, before) {
+  const t = threadById(id);
+  const target = threadById(targetId);
+  if (!t || !target) return;
+  const order = sortedThreads().filter((x) => x !== t);
+  let idx = order.indexOf(target);
+  if (!before) idx += 1;
+  order.splice(idx, 0, t);
+  setSection(t, target.section, order);
+}
+
+function moveThreadToSection(id, section) {
+  const t = threadById(id);
+  if (!t) return;
+  const order = sortedThreads().filter((x) => x !== t);
+  const first = order.findIndex((x) => SECTION_IDS.indexOf(x.section) >= SECTION_IDS.indexOf(section));
+  order.splice(first < 0 ? order.length : first, 0, t);
+  setSection(t, section, order);
+}
+
+function setSection(t, section, order) {
+  const changed = t.section !== section;
+  t.section = section;
+  renumber(order, (r) => queueUpsert('Threads', r));
+  if (changed) saveThread(t);
+  render();
+}
+
+function moveItem(id, dest) {
+  const i = itemById(id);
+  if (!i) return;
+  const fromThread = i.threadId;
+  const fromKind = i.kind;
+  const list = itemsOf(dest.threadId, dest.kind).filter((x) => x !== i);
+  let idx;
+  if (dest.targetId) {
+    idx = list.findIndex((x) => x.id === dest.targetId);
+    if (idx < 0) idx = list.length;
+    else if (!dest.before) idx += 1;
+  } else {
+    idx = NEWEST_FIRST[dest.kind] ? 0 : list.length;
+  }
+  list.splice(idx, 0, i);
+  const moved = i.threadId !== dest.threadId || i.kind !== dest.kind;
+  i.threadId = dest.threadId;
+  i.kind = dest.kind;
+  if (dest.kind !== 'task') i.done = false;
+  renumber(list, (r) => queueUpsert('Items', r));
+  if (moved) {
+    saveItem(i);
+    renumber(itemsOf(fromThread, fromKind), (r) => queueUpsert('Items', r));
+  }
+  render();
+}
+
+function clearDrop() {
+  if (dropMark) dropMark.el.classList.remove('drop-before', 'drop-after', 'drop-into');
+  dropMark = null;
+}
+
+function markDrop(el, cls, info) {
+  if (dropMark && dropMark.el === el && dropMark.cls === cls) {
+    dropMark.info = info;
+    return;
+  }
+  clearDrop();
+  el.classList.add(cls);
+  dropMark = { el, cls, info };
+}
+
+function dropTarget(e) {
+  if (!drag) return null;
+  if (drag.type === 'thread') {
+    const sec = e.target.closest('.thread');
+    if (sec && sec.dataset.thread !== drag.id) {
+      const r = sec.querySelector('.row').getBoundingClientRect();
+      const before = e.clientY < r.top + r.height / 2;
+      return { el: sec, cls: before ? 'drop-before' : 'drop-after', info: { targetId: sec.dataset.thread, before } };
+    }
+    const sectionEl = !sec && e.target.closest('.section');
+    if (sectionEl) return { el: sectionEl.querySelector('.section-head'), cls: 'drop-into', info: { section: sectionEl.dataset.section } };
+    return null;
+  }
+  const itemEl = e.target.closest('.item[data-item]');
+  if (itemEl && itemEl.dataset.item !== drag.id) {
+    const listEl = itemEl.closest('.list');
+    const r = itemEl.getBoundingClientRect();
+    const before = e.clientY < r.top + r.height / 2;
+    return { el: itemEl, cls: before ? 'drop-before' : 'drop-after', info: { threadId: listEl.dataset.thread, kind: listEl.dataset.list, targetId: itemEl.dataset.item, before } };
+  }
+  if (itemEl) return null;
+  const colEl = e.target.closest('.col');
+  const listEl = colEl ? colEl.querySelector('.list') : null;
+  if (listEl) return { el: listEl, cls: 'drop-into', info: { threadId: listEl.dataset.thread, kind: listEl.dataset.list } };
+  const sec = e.target.closest('.thread');
+  if (sec) {
+    const i = itemById(drag.id);
+    if (i && sec.dataset.thread !== i.threadId) return { el: sec.querySelector('.row'), cls: 'drop-into', info: { threadId: sec.dataset.thread, kind: i.kind } };
+  }
+  return null;
+}
+
+document.addEventListener('dragstart', (e) => {
+  const grip = e.target.closest && e.target.closest('[data-drag]');
+  if (!grip) return;
+  if (touch) return e.preventDefault();
+  drag = { type: grip.dataset.drag, id: grip.dataset.id };
+  const src = grip.closest(drag.type === 'thread' ? '.thread' : '.item');
+  e.dataTransfer.effectAllowed = 'move';
+  e.dataTransfer.setData('text/plain', drag.id);
+  if (src) {
+    e.dataTransfer.setDragImage(drag.type === 'thread' ? src.querySelector('.row') : src, 12, 12);
+    requestAnimationFrame(() => src.classList.add('dragging'));
+  }
+});
+
+document.addEventListener('dragover', (e) => {
+  const t = dropTarget(e);
+  if (!t) return clearDrop();
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  markDrop(t.el, t.cls, t.info);
+});
+
+document.addEventListener('drop', (e) => {
+  if (!drag || !dropMark) return;
+  e.preventDefault();
+  performDrop();
+});
+
+document.addEventListener('dragend', endDrag);
+
+function performDrop() {
+  const info = dropMark && dropMark.info;
+  const d = drag;
+  endDrag();
+  if (!d || !info) return;
+  if (d.type === 'thread' && info.section) moveThreadToSection(d.id, info.section);
+  else if (d.type === 'thread') moveThread(d.id, info.targetId, info.before);
+  else moveItem(d.id, info);
+}
+
+function endDrag() {
+  clearDrop();
+  drag = null;
+  document.querySelectorAll('.dragging').forEach((el) => el.classList.remove('dragging'));
+}
+
+let touch = null;
+
+function startTouchDrag() {
+  const src = touch.handle.closest(touch.type === 'thread' ? '.thread' : '.item');
+  if (!src) return cancelTouch();
+  touch.active = true;
+  drag = { type: touch.type, id: touch.id };
+  const box = (touch.type === 'thread' ? src.querySelector('.row') : src).getBoundingClientRect();
+  const ghost = (touch.type === 'thread' ? src.querySelector('.row') : src).cloneNode(true);
+  ghost.className += ' ghost';
+  ghost.style.width = box.width + 'px';
+  touch.dx = touch.x - box.left;
+  touch.dy = touch.y - box.top;
+  document.body.appendChild(ghost);
+  touch.ghost = ghost;
+  src.classList.add('dragging');
+  document.body.classList.add('touch-dragging');
+  if (navigator.vibrate) navigator.vibrate(15);
+  placeGhost();
+  touch.raf = requestAnimationFrame(autoScroll);
+}
+
+function placeGhost() {
+  touch.ghost.style.transform = 'translate(' + (touch.x - touch.dx) + 'px,' + (touch.y - touch.dy) + 'px)';
+  const el = document.elementFromPoint(touch.x, touch.y);
+  const t = el && dropTarget({ target: el, clientY: touch.y });
+  if (t) markDrop(t.el, t.cls, t.info);
+  else clearDrop();
+}
+
+function autoScroll() {
+  if (!touch || !touch.active) return;
+  const edge = 70;
+  const v = touch.y < edge ? -(edge - touch.y) / 4 : touch.y > innerHeight - edge ? (touch.y - innerHeight + edge) / 4 : 0;
+  if (v) {
+    window.scrollBy(0, v);
+    placeGhost();
+  }
+  touch.raf = requestAnimationFrame(autoScroll);
+}
+
+function teardownTouch() {
+  clearTimeout(touch.timer);
+  cancelAnimationFrame(touch.raf);
+  if (touch.ghost) touch.ghost.remove();
+  document.body.classList.remove('touch-dragging');
+  touch = null;
+}
+
+function cancelTouch() {
+  if (!touch) return;
+  const wasActive = touch.active;
+  teardownTouch();
+  if (wasActive) endDrag();
+}
+
+document.addEventListener('touchstart', (e) => {
+  if (e.touches.length !== 1) return cancelTouch();
+  const handle = e.target.closest && e.target.closest('[data-drag]');
+  if (!handle || editingThread || editingItem) return;
+  const p = e.touches[0];
+  touch = { handle, type: handle.dataset.drag, id: handle.dataset.id, x: p.clientX, y: p.clientY, active: false };
+  touch.timer = setTimeout(startTouchDrag, 300);
+}, { passive: true });
+
+document.addEventListener('touchmove', (e) => {
+  if (!touch) return;
+  const p = e.touches[0];
+  if (!touch.active) {
+    if (Math.hypot(p.clientX - touch.x, p.clientY - touch.y) > 8) cancelTouch();
+    return;
+  }
+  e.preventDefault();
+  touch.x = p.clientX;
+  touch.y = p.clientY;
+  placeGhost();
+}, { passive: false });
+
+document.addEventListener('touchend', (e) => {
+  if (!touch) return;
+  if (!touch.active) return cancelTouch();
+  e.preventDefault();
+  teardownTouch();
+  performDrop();
+}, { passive: false });
+
+document.addEventListener('touchcancel', cancelTouch);
+
+document.addEventListener('contextmenu', (e) => {
+  if (touch || (lastPointer === 'touch' && e.target.closest && e.target.closest('[data-drag]'))) e.preventDefault();
+});
+
+let lastPointer = 'mouse';
+document.addEventListener('pointerdown', (e) => { lastPointer = e.pointerType; }, true);
+
+document.addEventListener('click', (e) => {
+  const goEl = e.target.closest('[data-goto]');
+  if (goEl && !e.target.closest('button')) return goto(goEl.dataset.goto);
+  if (e.target.closest('a')) return;
+  const f = e.target.closest('[data-filter]');
+  if (f) {
+    ui.filter = f.dataset.filter;
+    saveUi();
+    return render();
+  }
+  const actEl = e.target.closest('[data-action]');
+  if (!actEl) return;
+  const action = actEl.dataset.action;
+  const sec = actEl.closest('.thread');
+  const tid = sec && sec.dataset.thread;
+  const itemEl = actEl.closest('[data-item]');
+  const iid = itemEl && itemEl.dataset.item;
+  if (action === 'toggle') {
+    if (e.target.closest('input, select, textarea, button, .grip')) return;
+    if (e.target.closest('.title') && lastPointer !== 'touch') return;
+    if (editingThread === tid) return;
+    return toggle(tid);
+  }
+  if (action === 'toggle-section') {
+    const s = actEl.closest('.section').dataset.section;
+    if (ui.collapsedSections.has(s)) ui.collapsedSections.delete(s);
+    else ui.collapsedSections.add(s);
+    saveUi();
+    return render();
+  }
+  if (action === 'move-section') return moveThreadToSection(tid, actEl.dataset.section);
+  if (action === 'rename') {
+    editingThread = tid;
+    pendingFocus = 'title:' + tid;
+    return render();
+  }
+  if (action === 'check') {
+    const i = itemById(iid);
+    i.done = actEl.checked;
+    saveItem(i);
+    return render();
+  }
+  if (action === 'edit-item') {
+    if (editingItem) commitEdit(false);
+    return startEdit(iid);
+  }
+  if (action === 'delete-item') return removeItems([itemById(iid)]);
+  if (action === 'delete-thread') {
+    const t = threadById(tid);
+    return removeItems(items.filter((i) => i.threadId === tid), [t]);
+  }
+  if (action === 'save-edit') return commitEdit(false);
+  if (action === 'cancel-edit') return commitEdit(true);
+  if (action === 'unref') {
+    editDraft.refs = editDraft.refs.filter((r) => r !== actEl.dataset.ref);
+    pendingFocus = 'edit:' + editingItem;
+    return render();
+  }
+});
+
+document.addEventListener('dblclick', (e) => {
+  const title = e.target.closest('.row .title');
+  if (!title || e.target.closest('input')) return;
+  const tid = title.closest('.thread').dataset.thread;
+  editingThread = tid;
+  pendingFocus = 'title:' + tid;
+  render();
+});
+
+document.addEventListener('mousedown', (e) => {
+  if (e.target.closest('[data-editor] button, .add-btn')) e.preventDefault();
+});
+
+document.addEventListener('change', (e) => {
+  const el = e.target;
+  if (el.dataset.action === 'status') {
+    const t = threadById(el.closest('.thread').dataset.thread);
+    t.status = el.value;
+    saveThread(t);
+    return render();
+  }
+  if (el.dataset.action === 'addref' && el.value) {
+    editDraft.refs.push(el.value);
+    pendingFocus = 'edit:' + editingItem;
+    return render();
+  }
+});
+
+document.addEventListener('input', (e) => {
+  const el = e.target;
+  if (el.tagName === 'TEXTAREA') autosize(el);
+  if (editDraft && el.closest('[data-editor]')) {
+    if (el.classList.contains('e-text')) editDraft.text = el.value;
+    if (el.classList.contains('e-link')) editDraft.link = el.value;
+  }
+  if (el.id === 'search') render();
+});
+
+document.addEventListener('keydown', (e) => {
+  const el = e.target;
+  const enterSaves = e.key === 'Enter' && !e.shiftKey && !e.isComposing;
+  if (el.classList && el.classList.contains('title-input')) {
+    if (e.key === 'Escape') commitTitle(editingThread, el.value, true);
+    return;
+  }
+  if (el.closest && el.closest('[data-editor]')) {
+    if (enterSaves && el.tagName !== 'SELECT') { e.preventDefault(); commitEdit(false); }
+    if (e.key === 'Escape') commitEdit(true);
+    return;
+  }
+  if (el.dataset && el.dataset.add) {
+    if (enterSaves && el.tagName === 'TEXTAREA') {
+      e.preventDefault();
+      submitAdd(el);
+    }
+    if (e.key === 'Escape') el.blur();
+    return;
+  }
+  if (el.id === 'search') {
+    if (e.key === 'Escape') { el.value = ''; el.blur(); render(); }
+    return;
+  }
+  if (/INPUT|TEXTAREA|SELECT/.test(el.tagName) || e.metaKey || e.ctrlKey || e.altKey) return;
+  if (e.key === 'n') { e.preventDefault(); newThread(); }
+  if (e.key === '/') { e.preventDefault(); document.getElementById('search').focus(); }
+});
+
+function submitAdd(el) {
+  const tid = el.closest('.thread').dataset.thread;
+  const text = el.value;
+  el.value = '';
+  addItem(tid, el.dataset.add, text);
+}
+
+document.addEventListener('submit', (e) => {
+  e.preventDefault();
+  const form = e.target;
+  if (form.dataset.addForm) return submitAdd(form.querySelector('[data-add]'));
+  if (form.dataset.titleForm && editingThread) commitTitle(editingThread, form.querySelector('input').value, false);
+});
+
+document.addEventListener('focusout', (e) => {
+  if (rendering) return;
+  const el = e.target;
+  if (el.classList && el.classList.contains('title-input') && editingThread) {
+    setTimeout(() => { if (editingThread && !rendering) commitTitle(editingThread, el.value, false); }, 0);
+    return;
+  }
+  const editor = el.closest && el.closest('[data-editor]');
+  if (editor && editingItem && !(e.relatedTarget && editor.contains(e.relatedTarget))) {
+    setTimeout(() => {
+      if (editingItem && !editor.contains(document.activeElement)) commitEdit(false);
+    }, 0);
+  }
+});
+
+document.getElementById('newThread').addEventListener('click', newThread);
+document.getElementById('undo').addEventListener('click', undoDelete);
+document.getElementById('expandAll').addEventListener('click', () => {
+  visibleThreads().forEach((t) => ui.expanded.add(t.id));
+  saveUi();
+  render();
+});
+document.getElementById('collapseAll').addEventListener('click', () => {
+  ui.expanded.clear();
+  saveUi();
+  render();
+});
+
+window.addEventListener('beforeunload', (e) => {
+  if (!durable && (pending.size || inFlight)) {
+    e.preventDefault();
+    e.returnValue = '';
+  }
+});
+
+window.addEventListener('online', () => (pending.size ? scheduleFlush(0) : load()));
+
+const POLL_ACTIVE_MS = window.THREADS_POLL_MS || 15000;
+const POLL_IDLE_MS = POLL_ACTIVE_MS * 4;
+const IDLE_AFTER_MS = 10 * 60000;
+let lastInput = Date.now();
+let lastAttempt = 0;
+let lastSig = '';
+
+['pointerdown', 'keydown'].forEach((ev) => document.addEventListener(ev, () => { lastInput = Date.now(); }, true));
+
+function canPoll() {
+  const tag = (document.activeElement && document.activeElement.tagName) || '';
+  return document.visibilityState === 'visible' && !pending.size && !inFlight && !loading
+    && !editingItem && !editingThread && !drag && !touch && !/INPUT|TEXTAREA|SELECT/.test(tag);
+}
+
+setInterval(() => {
+  const every = Date.now() - lastInput > IDLE_AFTER_MS ? POLL_IDLE_MS : POLL_ACTIVE_MS;
+  if (Date.now() - lastAttempt >= every && canPoll()) load(true);
+}, 1000);
+
+function syncSoon() {
+  if (Date.now() - lastAttempt > 3000 && canPoll()) load(true);
+}
+
+window.addEventListener('focus', syncSoon);
+document.addEventListener('visibilitychange', syncSoon);
+
+setInterval(() => {
+  if (!editingItem && !editingThread && !drag && document.activeElement === document.body) render();
+}, 60000);
+
+function applyData(data) {
+  threads = (data.threads || []).map(normThread);
+  items = (data.items || []).map(normItem);
+  overlayPending();
+  if (data.sheetUrl) {
+    const a = document.getElementById('sheetLink');
+    a.href = data.sheetUrl;
+    a.style.display = '';
+  }
+}
+
+async function load(quiet) {
+  if (loading) return;
+  loading = true;
+  lastAttempt = Date.now();
+  const wasOffline = offline;
+  if (!quiet) setSync();
+  let fresh = false;
+  try {
+    const data = await withTimeout(api.load(), 20000);
+    const sig = JSON.stringify([data.threads, data.items]);
+    if (!quiet || sig !== lastSig || wasOffline) {
+      applyData({ threads: data.threads, items: data.items, sheetUrl: data.meta && data.meta.sheetUrl });
+      saveCache();
+      fresh = true;
+    }
+    lastSig = sig;
+    lastLoad = Date.now();
+    offline = false;
+    failed = false;
+    cachedAt = '';
+    if (pending.size) scheduleFlush(0);
+  } catch (err) {
+    console.error(err);
+    offline = true;
+  }
+  loading = false;
+  setSync();
+  if (fresh || offline !== wasOffline) render();
+}
+
+const headerEl = document.querySelector('header');
+new ResizeObserver(() => document.documentElement.style.setProperty('--head', headerEl.offsetHeight + 'px')).observe(headerEl);
+
+restorePending();
+const cache = storeGet(CACHE_KEY);
+if (cache) {
+  cachedAt = cache.at;
+  applyData(cache);
+  render();
+}
+load();
+</script>
+</body>
+</html>
