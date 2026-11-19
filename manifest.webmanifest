@@ -1,6 +1,6 @@
 {
-  "name": "Threads",
-  "short_name": "Threads",
+  "name": "Junction",
+  "short_name": "Junction",
   "description": "Track threads of work: subtasks, notes and decisions.",
   "start_url": "./",
   "scope": "./",
