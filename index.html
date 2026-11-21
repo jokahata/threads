@@ -744,12 +744,121 @@ body.touch-dragging { -webkit-user-select: none; user-select: none; }
   .panel-foot { padding: 8px 10px; }
   .chip { max-width: 70vw; }
 }
+body.people-view #scratch, body.people-view #inbox, body.people-view #timeline, body.people-view #flags, body.people-view #prs, body.people-view #docs, body.people-view #filters, body.people-view #expandAll, body.people-view #collapseAll, body.people-view #search, body.people-view #newThread { display: none; }
+.pp-page { padding: 12px 16px 40px; }
+.pp-cols { display: grid; grid-template-columns: minmax(280px, 360px) minmax(0, 1fr); gap: 16px; align-items: start; }
+.pp-log { position: sticky; top: calc(var(--head, 50px) + 12px); background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 12px; display: flex; flex-direction: column; gap: 10px; }
+.pp-log.editing { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+.pp-log-head { display: flex; align-items: center; gap: 8px; font-size: 14px; }
+.pp-log label, .pp-about { display: flex; flex-direction: column; gap: 3px; font-size: 11px; font-weight: 600; color: var(--muted); }
+.pp-log label .muted { font-weight: 400; }
+.pp-log input, .pp-about textarea { font-size: 14px; font-weight: 400; color: var(--text); width: 100%; }
+.pp-when { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.pp-label { font-size: 11px; font-weight: 600; color: var(--muted); margin-bottom: -4px; }
+.pp-who { display: flex; flex-direction: column; gap: 4px; }
+.pp-who-row { display: flex; align-items: center; gap: 6px; }
+.pp-chip { flex: none; max-width: 45%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; background: var(--soft); border: 1px solid var(--line); border-radius: 999px; padding: 2px 10px; font-weight: 600; font-size: 13px; }
+.pp-chip.new { border-style: dashed; border-color: var(--accent); }
+.pp-chip small { color: var(--accent); font-weight: 500; font-size: 10px; }
+.pp-who-row .pp-wnote { flex: 1; min-width: 0; font-size: 13px; padding: 3px 8px; border-style: dashed; background: transparent; }
+.pp-who-row .pp-wnote:focus { border-style: solid; background: var(--panel); }
+.pp-who-row .x { flex: none; border: 0; background: none; color: var(--muted); padding: 2px 6px; }
+.pp-add { position: relative; }
+.pp-add input { width: 100%; font-size: 14px; }
+.pp-drop { position: absolute; left: 0; right: 0; top: calc(100% + 2px); z-index: 30; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; box-shadow: 0 8px 24px rgba(0,0,0,.15); overflow: hidden; }
+.pp-sug { display: flex; width: 100%; gap: 8px; align-items: baseline; justify-content: space-between; border: 0; border-radius: 0; padding: 7px 10px; text-align: left; font-size: 14px; background: var(--panel); }
+.pp-sug .muted { font-size: 11px; }
+.pp-sug.hi, .pp-sug:hover { background: var(--soft); }
+.pp-often { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; font-size: 12px; margin-top: 6px; }
+.pp-often .chip { cursor: pointer; border: 1px solid var(--line); background: var(--panel); }
+.pp-actions { display: flex; align-items: center; gap: 8px; }
+.pp-tabs { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
+.pp-tabs .muted { font-size: 12px; }
+.pp-empty { color: var(--muted); padding: 24px 4px; }
+.pp-month { font-weight: 700; font-size: 12px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); margin: 14px 2px 6px; }
+.pp-month:first-of-type { margin-top: 0; }
+.pp-ev { display: flex; gap: 12px; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; margin-bottom: 6px; }
+.pp-ev.editing { border-color: var(--accent); }
+.pp-day { flex: none; width: 34px; display: flex; flex-direction: column; align-items: center; line-height: 1.1; }
+.pp-day b { font-size: 18px; }
+.pp-day span { font-size: 11px; color: var(--muted); }
+.pp-evbody { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.pp-evhead { display: flex; align-items: baseline; gap: 8px; }
+.pp-evtitle { font-weight: 600; font-size: 14px; }
+.pp-edit { font-size: 12px; opacity: .6; }
+.pp-ev:hover .pp-edit { opacity: 1; }
+.pp-chips { display: flex; flex-wrap: wrap; gap: 4px 6px; }
+.pp-pchip { display: inline-flex; align-items: baseline; gap: 4px; background: var(--soft); border-radius: 999px; padding: 2px 10px; font-size: 13px; max-width: 100%; }
+.pp-pchip .linkish, .pp-htitle .linkish { font-weight: 600; color: var(--text); }
+.pp-pnote { color: var(--muted); font-size: 12px; overflow: hidden; text-overflow: ellipsis; }
+.pp-pnote::before { content: '- '; }
+.pp-none { font-size: 12px; }
+.pp-lanes-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; font-size: 12px; flex-wrap: wrap; }
+.pp-lanes { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.pp-lanes-inner { min-width: 620px; padding: 4px 0 8px; }
+.pp-lane { display: grid; grid-template-columns: 150px minmax(0, 1fr); align-items: center; min-height: 30px; border-bottom: 1px solid var(--soft); }
+.pp-lane:last-child { border-bottom: 0; }
+.pp-lname { position: sticky; left: 0; z-index: 2; display: flex; justify-content: space-between; align-items: center; gap: 6px; height: 100%; border: 0; border-radius: 0; background: var(--panel); padding: 4px 10px; text-align: left; font-weight: 600; min-width: 0; }
+.pp-lname span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pp-track { position: relative; height: 30px; margin-right: 14px; }
+.pp-axis { min-height: 24px; }
+.pp-axis .pp-track { height: 24px; }
+.pp-tick { position: absolute; top: 5px; transform: translateX(-50%); font-size: 10px; color: var(--muted); white-space: nowrap; }
+.pp-tick.pp-today { color: var(--accent); font-weight: 600; }
+.pp-grid { position: absolute; top: 0; bottom: 0; width: 1px; background: var(--soft); }
+.pp-grid.pp-today { background: var(--accent); opacity: .35; }
+.pp-dot { position: absolute; top: 50%; width: 12px; height: 12px; margin: -6px 0 0 -6px; padding: 0; border-radius: 50%; border: 2px solid var(--panel); background: var(--accent); cursor: pointer; z-index: 1; }
+.pp-dot:hover { transform: scale(1.35); background: var(--idea); }
+.pp-since { font-size: 12px; font-weight: 600; white-space: nowrap; }
+.pp-fresh { color: var(--done); }
+.pp-mid { color: var(--muted); }
+.pp-old { color: var(--waiting); }
+.pp-cold { color: var(--blocked); }
+.pp-never { color: var(--muted); font-weight: 400; }
+.pp-plist-bar { display: flex; gap: 8px; margin-bottom: 8px; }
+.pp-plist-bar input { flex: 1; min-width: 0; }
+.pp-plist-bar select { padding: 3px 6px; border: 1px solid var(--line); border-radius: 6px; background: var(--panel); }
+.pp-plist { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+.pp-prow { display: grid; grid-template-columns: minmax(0, 1fr) auto auto 34px; gap: 12px; align-items: baseline; width: 100%; border: 0; border-bottom: 1px solid var(--soft); border-radius: 0; padding: 8px 12px; text-align: left; background: var(--panel); }
+.pp-prow:last-child { border-bottom: 0; }
+.pp-pname { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pp-plast, .pp-count { font-size: 12px; }
+.pp-count { text-align: right; }
+.pp-person { max-width: 720px; display: flex; flex-direction: column; gap: 12px; }
+.pp-person-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.pp-person-head h2 { margin: 0; font-size: 20px; cursor: text; }
+.pp-pname-input { font-size: 18px; font-weight: 700; padding: 2px 8px; }
+.pp-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.pp-stats > div { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; display: flex; flex-direction: column; gap: 2px; }
+.pp-stats .muted { font-size: 11px; }
+.pp-stats b { font-size: 16px; }
+.pp-about textarea { min-height: 34px; }
+.pp-hist { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+.pp-hrow { display: grid; grid-template-columns: 150px minmax(0, 1fr); gap: 10px; padding: 8px 12px; border-bottom: 1px solid var(--soft); align-items: baseline; }
+.pp-hrow:last-child { border-bottom: 0; }
+.pp-hdate { font-size: 12px; white-space: nowrap; }
+.pp-htitle { display: flex; flex-wrap: wrap; gap: 4px 8px; align-items: baseline; min-width: 0; }
+@media (max-width: 900px) {
+  .pp-cols { grid-template-columns: minmax(0, 1fr); }
+  .pp-log { position: static; }
+}
+@media (max-width: 700px) {
+  .pp-page { padding: 8px; }
+  .pp-lane { grid-template-columns: 110px minmax(0, 1fr); }
+  .pp-lname { font-size: 13px; padding: 4px 8px; }
+  .pp-prow { grid-template-columns: minmax(0, 1fr) auto 30px; }
+  .pp-plast { display: none; }
+  .pp-stats b { font-size: 14px; }
+  .pp-hrow { grid-template-columns: 1fr; gap: 2px; }
+}
+.pp-pchip .linkish, .pp-htitle .linkish { font-size: 13px; padding: 0; }
+.pp-edit.linkish { font-size: 12px; }
 </style>
 </head>
 <body>
 <header>
   <h1>Junction</h1>
-  <span class="seg view-seg"><button data-action="view-threads">Threads</button><button data-action="view-lists">Lists</button></span>
+  <span class="seg view-seg"><button data-action="view-threads">Threads</button><button data-action="view-lists">Lists</button><button data-action="view-people">People</button></span>
   <input id="search" placeholder="Search  ( / )">
   <div id="filters"></div>
   <span class="spacer"></span>
@@ -803,13 +912,13 @@ const api = hasGas ? {
   async load() {
     if (window.mockOffline) throw new Error('offline');
     const db = JSON.parse(localStorage.getItem('threads-db') || '{"threads":[],"items":[]}');
-    return { threads: db.threads, items: db.items, projects: db.projects || [], lists: db.lists || [], requests: db.requests || [], sessions: db.sessions || [], coordThreads: db.coordThreads || [], acks: db.acks || [], sync: db.sync || [], slackThreads: db.slackThreads || [], slackSuggestions: db.slackSuggestions || [], slackSummaries: db.slackSummaries || [], slackCaptures: db.slackCaptures || [], flags: db.flags || [], prs: db.prs || [], focus: db.focus || [], docs: db.docs || [], imports: db.imports || [], edits: db.edits || [], meta: {} };
+    return { threads: db.threads, items: db.items, projects: db.projects || [], lists: db.lists || [], requests: db.requests || [], sessions: db.sessions || [], coordThreads: db.coordThreads || [], acks: db.acks || [], sync: db.sync || [], slackThreads: db.slackThreads || [], slackSuggestions: db.slackSuggestions || [], slackSummaries: db.slackSummaries || [], slackCaptures: db.slackCaptures || [], flags: db.flags || [], prs: db.prs || [], focus: db.focus || [], docs: db.docs || [], imports: db.imports || [], edits: db.edits || [], people: db.people || [], events: db.events || [], seen: db.seen || [], meta: {} };
   },
   async apply(ops) {
     if (window.mockOffline) throw new Error('offline');
     const db = JSON.parse(localStorage.getItem('threads-db') || '{"threads":[],"items":[]}');
     ops.forEach((op) => {
-      const key = { Threads: 'threads', Items: 'items', Projects: 'projects', Requests: 'requests', Focus: 'focus', Lists: 'lists' }[op.table];
+      const key = { Threads: 'threads', Items: 'items', Projects: 'projects', Requests: 'requests', Focus: 'focus', Lists: 'lists', People: 'people', Events: 'events', Seen: 'seen' }[op.table];
       const list = db[key] = db[key] || [];
       const id = op.type === 'delete' ? op.id : op.record.id;
       const i = list.findIndex((r) => r.id === id);
@@ -846,6 +955,9 @@ const ui = loadUi();
 let threads = [];
 let projects = [];
 let lists = [];
+let people = [];
+let pevents = [];
+let seen = [];
 let requests = [];
 let sessions = [];
 let coordThreads = [];
@@ -1054,7 +1166,7 @@ function persistPending() {
 
 function saveCache() {
   const sheetLink = document.getElementById('sheetLink');
-  storeSet(CACHE_KEY, { at: now(), threads, items, projects, lists: lists.map((l) => Object.assign({}, l, { meta: JSON.stringify(l.meta) })), requests, sessions, coordThreads, acks, sync: Object.keys(syncInfo).map((k) => ({ key: k, value: syncInfo[k] })), slackThreads: slackThreads.map((r) => Object.assign({}, r, { recent: JSON.stringify(r.recent) })), slackSuggestions, slackCaptures, slackSummaries: slackSummaries.map((r) => Object.assign({}, r, { decisions: JSON.stringify(r.decisions), questions: JSON.stringify(r.questions) })), flags: flags.map((f) => f.raw), prs: prRows.map((r) => r.raw), focus: focusBlocks.map(focusRecord), docs: docs.map((d) => d.raw), imports, sheetUrl: sheetLink.style.display === 'none' ? '' : sheetLink.href });
+  storeSet(CACHE_KEY, { at: now(), threads, items, projects, lists: lists.map((l) => Object.assign({}, l, { meta: JSON.stringify(l.meta) })), requests, sessions, coordThreads, acks, sync: Object.keys(syncInfo).map((k) => ({ key: k, value: syncInfo[k] })), slackThreads: slackThreads.map((r) => Object.assign({}, r, { recent: JSON.stringify(r.recent) })), slackSuggestions, slackCaptures, slackSummaries: slackSummaries.map((r) => Object.assign({}, r, { decisions: JSON.stringify(r.decisions), questions: JSON.stringify(r.questions) })), flags: flags.map((f) => f.raw), prs: prRows.map((r) => r.raw), focus: focusBlocks.map(focusRecord), docs: docs.map((d) => d.raw), imports, people, events: pevents, seen, sheetUrl: sheetLink.style.display === 'none' ? '' : sheetLink.href });
 }
 
 function restorePending() {
@@ -1063,7 +1175,7 @@ function restorePending() {
 
 function overlayPending() {
   (inFlight || []).concat([...pending.values()]).forEach((op) => {
-    const tables = { Threads: [threads, normThread], Items: [items, normItem], Requests: [requests, normRequest], Projects: [projects, normProject], Focus: [focusBlocks, normFocus], Lists: [lists, normList] };
+    const tables = { Threads: [threads, normThread], Items: [items, normItem], Requests: [requests, normRequest], Projects: [projects, normProject], Focus: [focusBlocks, normFocus], Lists: [lists, normList], People: [people, normPerson], Events: [pevents, normPEvent], Seen: [seen, normSeen] };
     if (!tables[op.table]) return;
     const [list, norm] = tables[op.table];
     const id = op.type === 'delete' ? op.id : String(op.record.id);
@@ -1219,7 +1331,7 @@ function firstLine(s) { return String(s).split('\n')[0]; }
 
 function render() {
   const keep = {};
-  document.querySelectorAll('input[data-focus], textarea[data-focus]').forEach((el) => { if (el.type !== 'checkbox' && el.value !== el.defaultValue) keep[el.dataset.focus] = el.value; });
+  document.querySelectorAll('input[data-focus], textarea[data-focus]').forEach((el) => { if (el.type !== 'checkbox' && !el.dataset.pp && el.value !== el.defaultValue) keep[el.dataset.focus] = el.value; });
   const active = document.activeElement;
   let focusKey = pendingFocus;
   let sel = null;
@@ -1243,11 +1355,15 @@ function render() {
   renderDocs();
   const boardPid = viewProjectId() && ui.boards.has(viewProjectId()) ? viewProjectId() : '';
   const listsView = isListsView();
+  const peopleView = isPeopleView();
   document.body.classList.toggle('lists-view', listsView);
-  document.querySelectorAll('.view-seg button').forEach((b) => b.classList.toggle('on', (b.dataset.action === 'view-lists') === listsView));
-  document.getElementById('list').innerHTML = listsView ? listsPageHtml() : projectBannerHtml(list) + (boardPid ? boardHtml(boardPid) : threads.length || projects.length ? lanesHtml(list)
+  document.body.classList.toggle('people-view', peopleView);
+  const viewOn = peopleView ? 'view-people' : listsView ? 'view-lists' : 'view-threads';
+  document.querySelectorAll('.view-seg button').forEach((b) => b.classList.toggle('on', b.dataset.action === viewOn));
+  document.getElementById('list').innerHTML = peopleView ? peoplePageHtml() : listsView ? listsPageHtml() : projectBannerHtml(list) + (boardPid ? boardHtml(boardPid) : threads.length || projects.length ? lanesHtml(list)
     : '<div class="empty-state">No threads yet. Press <b>n</b> or click <b>+ New thread</b>.</div>');
   if (boardPid) requestAnimationFrame(drawBoardArrows);
+  if (peopleView) ppAfterRender();
 
   Object.keys(keep).forEach((k) => {
     const el = document.querySelector('[data-focus="' + k + '"]');
@@ -1870,7 +1986,7 @@ function goto(id) {
 }
 
 function newThread() {
-  if (isListsView()) history.replaceState(null, '', location.pathname + location.search);
+  if (isListsView() || isPeopleView()) history.replaceState(null, '', location.pathname + location.search);
   const min = threads.filter((t) => t.section === 'now').reduce((m, t) => Math.min(m, t.position), 1);
   const t = { id: uid(), title: '', status: 'active', position: min - 1, created: now(), updated: now(), section: 'now', project: viewProjectId() };
   threads.push(t);
@@ -4651,8 +4767,9 @@ document.addEventListener('click', (e) => {
     return startEdit(i.id);
   }
   if (action === 'board-import') return importBoard(actEl.dataset.import);
-  if (action === 'view-lists' || action === 'view-threads') {
-    location.hash = action === 'view-lists' ? '#lists' : '';
+  if (action.startsWith('pp-')) return peopleAction(action, actEl);
+  if (action === 'view-lists' || action === 'view-threads' || action === 'view-people') {
+    location.hash = action === 'view-lists' ? '#lists' : action === 'view-people' ? '#people' : '';
     if (action === 'view-threads' && location.hash) history.replaceState(null, '', location.pathname + location.search);
     return render();
   }
@@ -4754,6 +4871,7 @@ document.addEventListener('mousedown', (e) => {
 
 document.addEventListener('change', (e) => {
   const el = e.target;
+  if (el.dataset && el.dataset.pp) return peopleChange(el);
   if (el.dataset.action === 'track-session' && el.value) {
     const [kind, id] = el.value.split(':');
     return trackSession(el.dataset.session, kind === 't' ? { threadId: id } : { projectId: id });
@@ -4851,6 +4969,7 @@ document.addEventListener('change', (e) => {
 
 document.addEventListener('input', (e) => {
   const el = e.target;
+  if (el.dataset && el.dataset.pp) return peopleInput(el);
   if (el.dataset && el.dataset.action === 'focus-mins-input' && focusDraft) {
     focusDraft.minutes = Number(el.value) || 60;
     const btn = document.querySelector('#focusPanel .focus-start');
@@ -4880,6 +4999,7 @@ window.addEventListener('resize', () => requestAnimationFrame(drawBoardArrows));
 
 document.addEventListener('keydown', (e) => {
   const el = e.target;
+  if (el.dataset && el.dataset.pp) return peopleKey(e);
   if (docView && e.key === 'Escape') return closeDoc();
   const enterSaves = e.key === 'Enter' && !e.shiftKey && !e.isComposing;
   if (el.classList && el.classList.contains('ladd') && e.key === 'Escape' && laddOpen) {
@@ -4943,6 +5063,7 @@ function submitAdd(el) {
 document.addEventListener('submit', (e) => {
   e.preventDefault();
   const form = e.target;
+  if (form.dataset.ppForm) return savePDraft();
   if (form.dataset.addForm) return submitAdd(form.querySelector('[data-add]'));
   if (form.dataset.ladd) {
     const input = form.querySelector('.ladd');
@@ -5064,6 +5185,7 @@ document.addEventListener('paste', (e) => {
 window.addEventListener('hashchange', () => {
   window.scrollTo({ top: 0 });
   listEditing = null;
+  if (!isPeopleView()) { pPerson = null; pPersonEdit = false; }
   render();
 });
 
@@ -5100,6 +5222,570 @@ setInterval(() => {
   if (!editingItem && !editingThread && !drag && document.activeElement === document.body) render();
 }, 60000);
 
+// ---------------------------------------------------------------- People: who you saw, and when
+// Sheet tabs: People (id, name, note), Events (id, date, time, title, note), Seen (id, eventId, personId, note).
+
+const PP_RANGES = { '3m': 91, '6m': 183, '1y': 365, all: 0 };
+const PP_SORTS = { since: 'Longest since', recent: 'Most recent', count: 'Most seen', name: 'Name' };
+const pui = Object.assign({ tab: 'timeline', range: '6m', sort: 'since' }, storeGet('threads-people-ui') || {});
+let pDraft = null;
+let pPerson = null;
+let pPersonEdit = false;
+let pFilter = '';
+let pLanesScrolled = '';
+
+function savePui() { storeSet('threads-people-ui', { tab: pui.tab, range: pui.range, sort: pui.sort }); }
+function isPeopleView() { return location.hash === '#people'; }
+function pDay(date) { const p = String(date).split('-').map(Number); return new Date(p[0], p[1] - 1, p[2]); }
+
+function pDate(v) {
+  v = String(v == null ? '' : v).trim();
+  if (/^\d{4}-\d{2}-\d{2}$/.test(v)) return v;
+  const d = v ? new Date(v) : null;
+  return d && !isNaN(d) ? ymd(d) : '';
+}
+
+function pTime(v) {
+  v = String(v == null ? '' : v).trim();
+  const m = v.match(/^(\d{1,2}):(\d{2})/);
+  if (m) return pad2(m[1]) + ':' + m[2];
+  if (v.includes('T')) {
+    const d = new Date(v);
+    if (!isNaN(d)) return pad2(d.getHours()) + ':' + pad2(d.getMinutes());
+  }
+  return '';
+}
+
+function normPerson(r) { return { id: String(r.id), name: String(r.name || '').trim(), note: String(r.note || ''), created: r.created || '', updated: r.updated || '' }; }
+function normPEvent(r) { return { id: String(r.id), date: pDate(r.date), time: pTime(r.time), title: String(r.title || ''), note: String(r.note || ''), created: r.created || '', updated: r.updated || '' }; }
+function normSeen(r) { return { id: String(r.id), eventId: String(r.eventId || ''), personId: String(r.personId || ''), note: String(r.note || ''), created: r.created || '', updated: r.updated || '' }; }
+
+function personById(id) { return people.find((p) => p.id === id) || null; }
+function pEventById(id) { return pevents.find((e) => e.id === id) || null; }
+function evKey(e) { return e.date + ' ' + (e.time || '99:99'); }
+function sortedPEvents() { return pevents.filter((e) => e.date).sort((a, b) => (evKey(a) < evKey(b) ? 1 : evKey(a) > evKey(b) ? -1 : 0)); }
+function pName(id) { const p = personById(id); return p ? p.name || 'Unnamed' : 'Unknown'; }
+
+function pStats() {
+  const ev = new Map(pevents.map((e) => [e.id, e]));
+  const st = new Map(people.map((p) => [p.id, { hist: [], last: '', first: '', count: 0 }]));
+  seen.forEach((s) => {
+    const e = ev.get(s.eventId);
+    const x = st.get(s.personId);
+    if (e && x && e.date) x.hist.push({ e, s });
+  });
+  st.forEach((x) => {
+    x.hist.sort((a, b) => (evKey(a.e) < evKey(b.e) ? 1 : -1));
+    const past = x.hist.filter((h) => daysSince(h.e.date) >= 0);
+    x.count = x.hist.length;
+    x.last = past.length ? past[0].e.date : '';
+    x.first = x.hist.length ? x.hist[x.hist.length - 1].e.date : '';
+  });
+  return st;
+}
+
+function daysSince(date) {
+  if (!date) return null;
+  const a = pDay(date);
+  const t = new Date();
+  return Math.round((Date.UTC(t.getFullYear(), t.getMonth(), t.getDate()) - Date.UTC(a.getFullYear(), a.getMonth(), a.getDate())) / DAY_MS);
+}
+
+function sinceLabel(n) {
+  if (n == null) return 'not yet';
+  if (n < 0) return 'in ' + (-n) + (n === -1 ? ' day' : ' days');
+  if (n === 0) return 'today';
+  if (n === 1) return 'yesterday';
+  if (n < 14) return n + ' days ago';
+  if (n < 60) return Math.round(n / 7) + ' weeks ago';
+  if (n < 730) return Math.round(n / 30.44) + ' months ago';
+  return (n / 365.25).toFixed(1).replace(/\.0$/, '') + ' years ago';
+}
+
+function sinceShort(n) {
+  if (n == null) return '-';
+  if (n < 0) return 'soon';
+  if (n === 0) return 'today';
+  if (n < 60) return n + 'd';
+  if (n < 730) return Math.round(n / 30.44) + 'mo';
+  return (n / 365.25).toFixed(1).replace(/\.0$/, '') + 'y';
+}
+
+function staleClass(n) { return n == null ? 'pp-never' : n <= 30 ? 'pp-fresh' : n <= 90 ? 'pp-mid' : n <= 180 ? 'pp-old' : 'pp-cold'; }
+
+function dateLabel(date, long) {
+  if (!date) return '';
+  const d = pDay(date);
+  const opts = { weekday: 'short', month: 'short', day: 'numeric' };
+  if (long || d.getFullYear() !== new Date().getFullYear()) opts.year = 'numeric';
+  return d.toLocaleDateString(undefined, opts);
+}
+
+function timeLabel(t) {
+  if (!t) return '';
+  const p = t.split(':').map(Number);
+  return new Date(2000, 0, 1, p[0], p[1]).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+}
+
+function newPDraft(date) { return { id: '', date: date || ymd(new Date()), time: '', title: '', who: [], q: '', hi: 0 }; }
+
+function whoKey(w) { return w.personId || 'n:' + w.name.toLowerCase(); }
+
+function pSuggestions() {
+  const d = pDraft;
+  const q = d.q.trim().toLowerCase();
+  if (!q) return [];
+  const st = pStats();
+  const taken = new Set(d.who.map((w) => w.personId).filter(Boolean));
+  const takenNames = new Set(d.who.map((w) => w.name.toLowerCase()));
+  const score = (p) => {
+    const n = p.name.toLowerCase();
+    return n.startsWith(q) ? 0 : n.split(/\s+/).some((w) => w.startsWith(q)) ? 1 : n.includes(q) ? 2 : 9;
+  };
+  const out = people.filter((p) => p.name && !taken.has(p.id) && score(p) < 9)
+    .sort((a, b) => score(a) - score(b) || st.get(b.id).count - st.get(a.id).count || a.name.localeCompare(b.name))
+    .slice(0, 6)
+    .map((p) => ({ id: p.id, name: p.name, sub: st.get(p.id).last ? 'seen ' + sinceLabel(daysSince(st.get(p.id).last)) : 'not seen yet' }));
+  if (!people.some((p) => p.name.toLowerCase() === q) && !takenNames.has(q)) out.push({ id: '', name: d.q.trim(), sub: 'add as a new person' });
+  return out;
+}
+
+function pOften() {
+  const st = pStats();
+  const taken = new Set(pDraft.who.map((w) => w.personId));
+  return people.filter((p) => p.name && !taken.has(p.id) && st.get(p.id).count)
+    .sort((a, b) => (st.get(b.id).last > st.get(a.id).last ? 1 : st.get(b.id).last < st.get(a.id).last ? -1 : 0) || st.get(b.id).count - st.get(a.id).count)
+    .slice(0, 8);
+}
+
+function pSuggHtml() {
+  if (!pDraft.q.trim()) {
+    const often = pOften();
+    return often.length ? '<div class="pp-often"><span class="muted">Recent:</span>' + often.map((p) => '<button type="button" class="chip" data-action="pp-pick" data-id="' + p.id + '">' + esc(p.name) + '</button>').join('') + '</div>' : '';
+  }
+  const list = pSuggestions();
+  if (pDraft.hi >= list.length) pDraft.hi = Math.max(0, list.length - 1);
+  return '<div class="pp-drop">' + list.map((s, n) => '<button type="button" class="pp-sug' + (n === pDraft.hi ? ' hi' : '') + '" data-action="pp-pick" data-id="' + s.id + '" data-name="' + esc(s.name) + '">'
+    + (s.id ? '' : '+ ') + esc(s.name) + '<span class="muted">' + esc(s.sub) + '</span></button>').join('') + '</div>';
+}
+
+function refreshSugg() {
+  const el = document.getElementById('pp-sugg');
+  if (el) el.innerHTML = pSuggHtml();
+}
+
+function addWho(id, name) {
+  const d = pDraft;
+  if (id) {
+    const p = personById(id);
+    if (!p || d.who.some((w) => w.personId === id)) return;
+    d.who.push({ personId: id, name: p.name, note: '' });
+  } else {
+    name = String(name || '').trim().replace(/\s+/g, ' ');
+    if (!name) return;
+    const ex = people.find((p) => p.name.toLowerCase() === name.toLowerCase());
+    if (ex) return addWho(ex.id);
+    if (d.who.some((w) => w.name.toLowerCase() === name.toLowerCase())) return;
+    d.who.push({ personId: '', name, note: '' });
+  }
+}
+
+function pickHighlighted() {
+  const list = pSuggestions();
+  const s = list[pDraft.hi] || list[0];
+  if (s) addWho(s.id, s.name);
+  else if (pDraft.q.trim()) addWho('', pDraft.q);
+  pDraft.q = '';
+  pDraft.hi = 0;
+}
+
+function logFormHtml() {
+  const d = pDraft;
+  const editing = !!d.id;
+  const titles = [...new Set(sortedPEvents().map((e) => e.title.trim()).filter(Boolean))].slice(0, 40);
+  return '<form class="pp-log' + (editing ? ' editing' : '') + '" data-pp-form="1">'
+    + '<div class="pp-log-head"><b>' + (editing ? 'Edit event' : 'Log who you saw') + '</b><span class="spacer"></span>'
+    + (editing ? '<button type="button" data-action="pp-cancel">Cancel</button>' : '') + '</div>'
+    + '<div class="pp-when"><label>Day<input type="date" data-pp="date" value="' + esc(d.date) + '" required></label>'
+    + '<label><span>Time <span class="muted">optional</span></span><input type="time" data-pp="time" value="' + esc(d.time) + '"></label></div>'
+    + '<label>Event<input data-pp="title" data-focus="pp-title" list="pp-titles" value="' + esc(d.title) + '" placeholder="e.g. Sam\'s birthday, climbing night" autocomplete="off" enterkeyhint="next"></label>'
+    + '<datalist id="pp-titles">' + titles.map((t) => '<option value="' + esc(t) + '">').join('') + '</datalist>'
+    + '<div class="pp-label">People</div>'
+    + (d.who.length ? '<div class="pp-who">' + d.who.map((w) => '<div class="pp-who-row">'
+      + '<span class="pp-chip' + (w.personId ? '' : ' new') + '" title="' + (w.personId ? '' : 'New person, added when you save') + '">' + esc(w.name) + (w.personId ? '' : ' <small>new</small>') + '</span>'
+      + '<input class="pp-wnote" data-pp="who-note" data-key="' + esc(whoKey(w)) + '" data-focus="pp-who:' + esc(whoKey(w)) + '" value="' + esc(w.note) + '" placeholder="note (optional)" autocomplete="off" enterkeyhint="next">'
+      + '<button type="button" class="x" data-action="pp-who-remove" data-key="' + esc(whoKey(w)) + '" title="Remove">x</button></div>').join('') + '</div>' : '')
+    + '<div class="pp-add"><input data-pp="q" data-focus="pp-q" value="' + esc(d.q) + '" placeholder="Type a name, Enter to add" autocomplete="off" autocapitalize="words" enterkeyhint="enter">'
+    + '<div id="pp-sugg">' + pSuggHtml() + '</div></div>'
+    + '<div class="pp-actions">' + (editing ? '<button type="button" class="danger" data-action="pp-delete-event">Delete event</button>' : '')
+    + '<span class="spacer"></span><button class="primary" type="submit">' + (editing ? 'Save changes' : 'Save') + '</button></div>'
+    + '</form>';
+}
+
+function pChipsHtml(e) {
+  const rows = seen.filter((s) => s.eventId === e.id).sort((a, b) => pName(a.personId).localeCompare(pName(b.personId)));
+  if (!rows.length) return '<div class="muted pp-none">No one added</div>';
+  return '<div class="pp-chips">' + rows.map((s) => '<span class="pp-pchip"><button type="button" class="linkish" data-action="pp-person" data-id="' + s.personId + '">' + esc(pName(s.personId)) + '</button>'
+    + (s.note ? '<span class="pp-pnote">' + esc(s.note) + '</span>' : '') + '</span>').join('') + '</div>';
+}
+
+function ppTimelineHtml() {
+  const evs = sortedPEvents();
+  if (!evs.length) return '<div class="pp-empty">Nothing logged yet. Add the first event with the form.</div>';
+  let month = '';
+  return evs.map((e) => {
+    const d = pDay(e.date);
+    const m = d.toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
+    const head = m !== month ? '<div class="pp-month">' + esc(m) + '</div>' : '';
+    month = m;
+    return head + '<div class="pp-ev' + (pDraft.id === e.id ? ' editing' : '') + '" data-ev="' + e.id + '">'
+      + '<div class="pp-day"><b>' + d.getDate() + '</b><span>' + d.toLocaleDateString(undefined, { weekday: 'short' }) + '</span></div>'
+      + '<div class="pp-evbody"><div class="pp-evhead"><span class="pp-evtitle">' + esc(e.title || 'Untitled') + '</span>'
+      + (e.time ? '<span class="muted">' + esc(timeLabel(e.time)) + '</span>' : '') + '<span class="spacer"></span>'
+      + '<button type="button" class="linkish pp-edit" data-action="pp-edit-event" data-id="' + e.id + '">Edit</button></div>'
+      + pChipsHtml(e) + '</div></div>';
+  }).join('');
+}
+
+function lanesHtml_people() {
+  const st = pStats();
+  const evs = sortedPEvents();
+  const who = people.filter((p) => st.get(p.id).count)
+    .sort((a, b) => (st.get(b.id).last > st.get(a.id).last ? 1 : st.get(b.id).last < st.get(a.id).last ? -1 : 0) || a.name.localeCompare(b.name));
+  if (!who.length) return '<div class="pp-empty">Lanes show up once you\'ve logged someone.</div>';
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const days = PP_RANGES[pui.range];
+  const earliest = evs.length ? pDay(evs[evs.length - 1].date) : today;
+  const latest = evs.length ? pDay(evs[0].date) : today;
+  let start = days ? new Date(today.getTime() - days * DAY_MS) : new Date(earliest.getTime() - 3 * DAY_MS);
+  const end = new Date(Math.max(today.getTime(), latest.getTime()) + 3 * DAY_MS);
+  if (end - start < 30 * DAY_MS) start = new Date(end.getTime() - 30 * DAY_MS);
+  const span = end - start;
+  const pct = (d) => ((d - start) / span * 100).toFixed(2) + '%';
+  const ticks = [];
+  const t = new Date(start.getFullYear(), start.getMonth() + 1, 1);
+  const stepM = span > 800 * DAY_MS ? 6 : span > 400 * DAY_MS ? 3 : 1;
+  while (t < end) {
+    if (t.getMonth() % stepM === 0) ticks.push(new Date(t));
+    t.setMonth(t.getMonth() + 1);
+  }
+  const tickHtml = ticks.map((d) => '<span class="pp-tick" style="left:' + pct(d) + '">' + esc(d.toLocaleDateString(undefined, d.getMonth() === 0 ? { month: 'short', year: '2-digit' } : { month: 'short' })) + '</span>').join('')
+    + '<span class="pp-tick pp-today" style="left:' + pct(today) + '">today</span>';
+  const grid = ticks.map((d) => '<i class="pp-grid" style="left:' + pct(d) + '"></i>').join('') + '<i class="pp-grid pp-today" style="left:' + pct(today) + '"></i>';
+  const rows = who.map((p) => {
+    const x = st.get(p.id);
+    const n = daysSince(x.last);
+    const dots = x.hist.filter((h) => pDay(h.e.date) >= start && pDay(h.e.date) <= end).map((h) =>
+      '<button type="button" class="pp-dot" style="left:' + pct(pDay(h.e.date)) + '" data-action="pp-edit-event" data-id="' + h.e.id + '" title="' + esc(dateLabel(h.e.date, true) + ' - ' + (h.e.title || 'Untitled') + (h.s.note ? '\n' + h.s.note : '')) + '"></button>').join('');
+    return '<div class="pp-lane"><button type="button" class="pp-lname" data-action="pp-person" data-id="' + p.id + '"><span>' + esc(p.name) + '</span>'
+      + '<span class="pp-since ' + staleClass(n) + '">' + sinceShort(n) + '</span></button>'
+      + '<div class="pp-track">' + grid + dots + '</div></div>';
+  }).join('');
+  return '<div class="pp-lanes-bar"><span class="seg">' + Object.keys(PP_RANGES).map((k) => '<button type="button" data-action="pp-range" data-range="' + k + '" class="' + (pui.range === k ? 'on' : '') + '">' + (k === 'all' ? 'All' : k) + '</button>').join('') + '</span>'
+    + '<span class="muted">Tap a dot to open that event</span></div>'
+    + '<div class="pp-lanes"><div class="pp-lanes-inner"><div class="pp-lane pp-axis"><span class="pp-lname"></span><div class="pp-track">' + tickHtml + '</div></div>' + rows + '</div></div>';
+}
+
+function peopleListHtml() {
+  const st = pStats();
+  const q = pFilter.trim().toLowerCase();
+  const list = people.filter((p) => !q || p.name.toLowerCase().includes(q));
+  const cmp = {
+    since: (a, b) => (st.get(a.id).last || '0') < (st.get(b.id).last || '0') ? -1 : (st.get(a.id).last || '0') > (st.get(b.id).last || '0') ? 1 : a.name.localeCompare(b.name),
+    recent: (a, b) => (st.get(a.id).last || '0') > (st.get(b.id).last || '0') ? -1 : (st.get(a.id).last || '0') < (st.get(b.id).last || '0') ? 1 : a.name.localeCompare(b.name),
+    count: (a, b) => st.get(b.id).count - st.get(a.id).count || a.name.localeCompare(b.name),
+    name: (a, b) => a.name.localeCompare(b.name),
+  }[pui.sort] || ((a, b) => a.name.localeCompare(b.name));
+  list.sort(cmp);
+  return '<div class="pp-plist-bar"><input data-pp="filter" data-focus="pp-filter" value="' + esc(pFilter) + '" placeholder="Find a person" autocomplete="off">'
+    + '<select data-pp="sort">' + Object.keys(PP_SORTS).map((k) => '<option value="' + k + '"' + (pui.sort === k ? ' selected' : '') + '>' + PP_SORTS[k] + '</option>').join('') + '</select></div>'
+    + (list.length ? '<div class="pp-plist">' + list.map((p) => {
+      const x = st.get(p.id);
+      const n = daysSince(x.last);
+      return '<button type="button" class="pp-prow" data-action="pp-person" data-id="' + p.id + '"><span class="pp-pname">' + esc(p.name || 'Unnamed') + '</span>'
+        + '<span class="pp-plast muted">' + (x.last ? dateLabel(x.last) : '') + '</span>'
+        + '<span class="pp-since ' + staleClass(n) + '">' + esc(x.last ? sinceLabel(n) : 'not seen yet') + '</span>'
+        + '<span class="pp-count muted" title="Times seen">' + x.count + 'x</span></button>';
+    }).join('') + '</div>' : '<div class="pp-empty">' + (people.length ? 'No one matches.' : 'People you add in the form show up here.') + '</div>');
+}
+
+function personDetailHtml(p) {
+  const x = pStats().get(p.id);
+  const n = daysSince(x.last);
+  return '<div class="pp-person">'
+    + '<div class="pp-person-head"><button type="button" data-action="pp-back">&larr; Back</button>'
+    + (pPersonEdit ? '<input class="pp-pname-input" data-pp="person-name" data-focus="pp-pname" value="' + esc(p.name) + '" autocomplete="off">'
+      : '<h2 data-action="pp-rename" title="Click to rename">' + esc(p.name || 'Unnamed') + '</h2>')
+    + '<span class="spacer"></span><button type="button" class="primary" data-action="pp-log-with" data-id="' + p.id + '">+ Log seeing ' + esc(p.name.split(' ')[0] || 'them') + '</button></div>'
+    + '<div class="pp-stats"><div><span class="muted">Last seen</span><b class="' + staleClass(n) + '">' + esc(x.last ? sinceLabel(n) : 'not yet') + '</b>' + (x.last ? '<span class="muted">' + esc(dateLabel(x.last, true)) + '</span>' : '') + '</div>'
+    + '<div><span class="muted">Times seen</span><b>' + x.count + '</b></div>'
+    + '<div><span class="muted">First logged</span><b>' + esc(x.first ? dateLabel(x.first, true) : '-') + '</b></div></div>'
+    + '<label class="pp-about">About<textarea data-pp="person-note" data-focus="pp-pnote" rows="1" placeholder="Anything to remember (how you met, partner, kids, interests...)">' + esc(p.note) + '</textarea></label>'
+    + '<div class="pp-label">History</div>'
+    + (x.hist.length ? '<div class="pp-hist">' + x.hist.map((h) => '<div class="pp-hrow"><span class="pp-hdate">' + esc(dateLabel(h.e.date)) + (h.e.time ? ' <span class="muted">' + esc(timeLabel(h.e.time)) + '</span>' : '') + '</span>'
+      + '<span class="pp-htitle"><button type="button" class="linkish" data-action="pp-edit-event" data-id="' + h.e.id + '">' + esc(h.e.title || 'Untitled') + '</button>'
+      + (h.s.note ? '<span class="pp-pnote">' + esc(h.s.note) + '</span>' : '') + '</span></div>').join('') + '</div>' : '<div class="pp-empty">Not logged at any event yet.</div>')
+    + '<div class="pp-actions"><button type="button" class="danger" data-action="pp-delete-person">Delete ' + esc(p.name || 'person') + '</button></div>'
+    + '</div>';
+}
+
+function peoplePageHtml() {
+  if (!pDraft) pDraft = newPDraft();
+  const p = pPerson && personById(pPerson);
+  if (p) return '<div class="pp-page">' + personDetailHtml(p) + '</div>';
+  pPerson = null;
+  const tabs = { timeline: 'Timeline', lanes: 'Lanes', people: 'People' };
+  const body = pui.tab === 'lanes' ? lanesHtml_people() : pui.tab === 'people' ? peopleListHtml() : ppTimelineHtml();
+  return '<div class="pp-page"><div class="pp-cols">' + logFormHtml()
+    + '<div class="pp-main"><div class="pp-tabs"><span class="seg">' + Object.keys(tabs).map((k) => '<button type="button" data-action="pp-tab" data-tab="' + k + '" class="' + (pui.tab === k ? 'on' : '') + '">' + tabs[k] + '</button>').join('') + '</span>'
+    + '<span class="muted">' + pevents.length + ' event' + (pevents.length === 1 ? '' : 's') + ', ' + people.length + ' ' + (people.length === 1 ? 'person' : 'people') + '</span></div>'
+    + body + '</div></div></div>';
+}
+
+function savePDraft() {
+  const d = pDraft;
+  if (d.q.trim()) pickHighlighted();
+  if (!d.date) return showToast('Pick a day first.', true);
+  if (!d.title.trim() && !d.who.length) return showToast('Add an event name or at least one person.', true);
+  let e = d.id ? pEventById(d.id) : null;
+  if (!e) {
+    e = normPEvent({ id: uid(), created: now() });
+    pevents.push(e);
+  }
+  e.date = d.date;
+  e.time = d.time;
+  e.title = d.title.trim();
+  e.updated = now();
+  queueUpsert('Events', e);
+  const kept = new Set();
+  d.who.forEach((w) => {
+    let pid = w.personId;
+    if (!pid || !personById(pid)) {
+      const ex = people.find((p) => p.name.toLowerCase() === w.name.trim().toLowerCase());
+      if (ex) pid = ex.id;
+      else {
+        const p = normPerson({ id: uid(), name: w.name.trim(), created: now(), updated: now() });
+        people.push(p);
+        queueUpsert('People', p);
+        pid = p.id;
+      }
+    }
+    let s = seen.find((x) => x.eventId === e.id && x.personId === pid);
+    if (s && kept.has(s.id)) return;
+    if (!s) {
+      s = normSeen({ id: uid(), eventId: e.id, personId: pid, created: now() });
+      seen.push(s);
+    }
+    const note = String(w.note || '').trim();
+    if (s.note !== note || !s.updated) {
+      s.note = note;
+      s.updated = now();
+      queueUpsert('Seen', s);
+    }
+    kept.add(s.id);
+  });
+  seen.filter((s) => s.eventId === e.id && !kept.has(s.id)).forEach((s) => queueDelete('Seen', s.id));
+  seen = seen.filter((s) => s.eventId !== e.id || kept.has(s.id));
+  showToast(d.id ? 'Event updated.' : 'Logged ' + (e.title || dateLabel(e.date)) + (d.who.length ? ' with ' + d.who.length + (d.who.length === 1 ? ' person.' : ' people.') : '.'), true);
+  pDraft = newPDraft();
+  if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+  render();
+}
+
+function editPEvent(id) {
+  const e = pEventById(id);
+  if (!e) return;
+  pDraft = { id: e.id, date: e.date, time: e.time, title: e.title, q: '', hi: 0,
+    who: seen.filter((s) => s.eventId === e.id).map((s) => ({ personId: s.personId, name: pName(s.personId), note: s.note })) };
+  pPerson = null;
+  pPersonEdit = false;
+  render();
+  const form = document.querySelector('.pp-log');
+  if (form) form.scrollIntoView({ block: 'start', behavior: 'smooth' });
+}
+
+function deletePEvent(id) {
+  const e = pEventById(id);
+  if (!e) return;
+  if (!confirm('Delete "' + (e.title || 'this event') + '" on ' + dateLabel(e.date, true) + '?')) return;
+  seen.filter((s) => s.eventId === id).forEach((s) => queueDelete('Seen', s.id));
+  seen = seen.filter((s) => s.eventId !== id);
+  pevents = pevents.filter((x) => x.id !== id);
+  queueDelete('Events', id);
+  pDraft = newPDraft();
+  render();
+}
+
+function commitPersonName(el, cancel) {
+  const p = personById(pPerson);
+  pPersonEdit = false;
+  const name = el.value.trim().replace(/\s+/g, ' ');
+  if (p && !cancel && name && name !== p.name) {
+    p.name = name;
+    p.updated = now();
+    queueUpsert('People', p);
+  }
+  render();
+}
+
+function ppAfterRender() {
+  const el = document.querySelector('.pp-lanes');
+  if (!el) return;
+  if (pLanesScrolled !== pui.range) el.scrollLeft = el.scrollWidth;
+  pLanesScrolled = pui.range;
+}
+
+function peopleAction(action, el) {
+  if (action === 'pp-tab') {
+    pui.tab = el.dataset.tab;
+    pLanesScrolled = '';
+    savePui();
+    return render();
+  }
+  if (action === 'pp-range') {
+    pui.range = el.dataset.range;
+    savePui();
+    return render();
+  }
+  if (action === 'pp-pick') {
+    addWho(el.dataset.id, el.dataset.name);
+    pDraft.q = '';
+    pDraft.hi = 0;
+    pendingFocus = 'pp-q';
+    return render();
+  }
+  if (action === 'pp-who-remove') {
+    pDraft.who = pDraft.who.filter((w) => whoKey(w) !== el.dataset.key);
+    return render();
+  }
+  if (action === 'pp-cancel') {
+    pDraft = newPDraft();
+    return render();
+  }
+  if (action === 'pp-edit-event') return editPEvent(el.dataset.id);
+  if (action === 'pp-delete-event') return deletePEvent(pDraft.id);
+  if (action === 'pp-person') {
+    pPerson = el.dataset.id;
+    pPersonEdit = false;
+    window.scrollTo({ top: 0 });
+    return render();
+  }
+  if (action === 'pp-back') {
+    pPerson = null;
+    pPersonEdit = false;
+    return render();
+  }
+  if (action === 'pp-rename') {
+    pPersonEdit = true;
+    pendingFocus = 'pp-pname';
+    return render();
+  }
+  if (action === 'pp-log-with') {
+    const keepEdit = pDraft && !pDraft.id ? pDraft : newPDraft();
+    pDraft = keepEdit;
+    addWho(el.dataset.id);
+    pPerson = null;
+    pendingFocus = 'pp-title';
+    window.scrollTo({ top: 0 });
+    return render();
+  }
+  if (action === 'pp-delete-person') {
+    const p = personById(pPerson);
+    if (!p) return;
+    const mine = seen.filter((s) => s.personId === p.id);
+    if (!confirm('Delete ' + (p.name || 'this person') + (mine.length ? ' and remove them from ' + mine.length + ' event' + (mine.length === 1 ? '' : 's') : '') + '? The events themselves stay.')) return;
+    mine.forEach((s) => queueDelete('Seen', s.id));
+    seen = seen.filter((s) => s.personId !== p.id);
+    people = people.filter((x) => x !== p);
+    queueDelete('People', p.id);
+    if (pDraft) pDraft.who = pDraft.who.filter((w) => w.personId !== p.id);
+    pPerson = null;
+    return render();
+  }
+}
+
+function peopleInput(el) {
+  const k = el.dataset.pp;
+  if (k === 'date') pDraft.date = el.value;
+  else if (k === 'time') pDraft.time = el.value;
+  else if (k === 'title') pDraft.title = el.value;
+  else if (k === 'who-note') {
+    const w = pDraft.who.find((x) => whoKey(x) === el.dataset.key);
+    if (w) w.note = el.value;
+  } else if (k === 'q') {
+    pDraft.q = el.value;
+    pDraft.hi = 0;
+    if (/,\s*$/.test(el.value)) {
+      pDraft.q = el.value.replace(/,\s*$/, '');
+      pickHighlighted();
+      pendingFocus = 'pp-q';
+      return render();
+    }
+    refreshSugg();
+  } else if (k === 'filter') {
+    pFilter = el.value;
+    render();
+  } else if (k === 'person-note') {
+    autosize(el);
+    const p = personById(pPerson);
+    if (p) p.note = el.value;
+  }
+}
+
+function peopleChange(el) {
+  const k = el.dataset.pp;
+  if (k === 'date' || k === 'time') return peopleInput(el);
+  if (k === 'sort') {
+    pui.sort = el.value;
+    savePui();
+    return render();
+  }
+  if (k === 'person-note') {
+    const p = personById(pPerson);
+    if (!p) return;
+    p.note = el.value;
+    p.updated = now();
+    queueUpsert('People', p);
+  }
+  if (k === 'person-name' && pPersonEdit) commitPersonName(el, false);
+}
+
+function peopleKey(e) {
+  const el = e.target;
+  const k = el.dataset.pp;
+  const enter = e.key === 'Enter' && !e.shiftKey && !e.isComposing;
+  if (k === 'q') {
+    const n = pSuggestions().length;
+    if (e.key === 'ArrowDown' && n) { e.preventDefault(); pDraft.hi = (pDraft.hi + 1) % n; return refreshSugg(); }
+    if (e.key === 'ArrowUp' && n) { e.preventDefault(); pDraft.hi = (pDraft.hi - 1 + n) % n; return refreshSugg(); }
+    if (e.key === 'Escape') { pDraft.q = ''; el.value = ''; return refreshSugg(); }
+    if (e.key === 'Backspace' && !el.value && pDraft.who.length) {
+      e.preventDefault();
+      pDraft.who.pop();
+      pendingFocus = 'pp-q';
+      return render();
+    }
+    if (enter && el.value.trim()) {
+      e.preventDefault();
+      pickHighlighted();
+      pendingFocus = 'pp-q';
+      return render();
+    }
+    return;
+  }
+  if (k === 'person-name') {
+    if (enter) { e.preventDefault(); return commitPersonName(el, false); }
+    if (e.key === 'Escape') return commitPersonName(el, true);
+    return;
+  }
+  if (enter && (k === 'title' || k === 'who-note' || k === 'date' || k === 'time')) {
+    e.preventDefault();
+    const q = document.querySelector('[data-pp="q"]');
+    if (q) q.focus();
+  }
+}
+
 function applyData(data) {
   threads = (data.threads || []).map(normThread);
   items = (data.items || []).map(normItem);
@@ -5120,6 +5806,9 @@ function applyData(data) {
   focusBlocks = (data.focus || []).filter((r) => r.id).map(normFocus);
   docs = (data.docs || []).filter((r) => r.key).map(normDoc);
   imports = (data.imports || []).filter((r) => r.id);
+  people = (data.people || []).filter((r) => r.id).map(normPerson);
+  pevents = (data.events || []).filter((r) => r.id).map(normPEvent);
+  seen = (data.seen || []).filter((r) => r.id).map(normSeen);
   slackCaptures = (data.slackCaptures || []).filter((r) => r.key).map((r) => ({ key: String(r.key), threadKey: String(r.threadKey || ''), permalink: String(r.permalink || ''), author: String(r.author || ''), text: String(r.text || ''), capturedAt: String(r.capturedAt || '') }));
   slackSummaries = (data.slackSummaries || []).filter((r) => r.key).map((r) => ({ key: r.key, summary: String(r.summary || ''), decisions: jsonList(r.decisions), questions: jsonList(r.questions), at: r.at || '' }));
   overlayPending();
@@ -5139,9 +5828,9 @@ async function load(quiet) {
   let fresh = false;
   try {
     const data = await withTimeout(api.load(), 20000);
-    const sig = JSON.stringify([data.threads, data.items, data.projects, data.lists, data.requests, data.sessions, data.coordThreads, data.acks, data.sync, data.slackThreads, data.slackSuggestions, data.slackSummaries, data.slackCaptures, data.flags, data.prs, data.focus, data.docs, data.imports, data.edits]);
+    const sig = JSON.stringify([data.threads, data.items, data.projects, data.lists, data.requests, data.sessions, data.coordThreads, data.acks, data.sync, data.slackThreads, data.slackSuggestions, data.slackSummaries, data.slackCaptures, data.flags, data.prs, data.focus, data.docs, data.imports, data.edits, data.people, data.events, data.seen]);
     if (!quiet || sig !== lastSig || wasOffline) {
-      applyData({ threads: data.threads, items: data.items, projects: data.projects, lists: data.lists, requests: data.requests, sessions: data.sessions, coordThreads: data.coordThreads, acks: data.acks, sync: data.sync, slackThreads: data.slackThreads, slackSuggestions: data.slackSuggestions, slackSummaries: data.slackSummaries, slackCaptures: data.slackCaptures, flags: data.flags, prs: data.prs, focus: data.focus, docs: data.docs, imports: data.imports, sheetUrl: data.meta && data.meta.sheetUrl });
+      applyData({ threads: data.threads, items: data.items, projects: data.projects, lists: data.lists, requests: data.requests, sessions: data.sessions, coordThreads: data.coordThreads, acks: data.acks, sync: data.sync, slackThreads: data.slackThreads, slackSuggestions: data.slackSuggestions, slackSummaries: data.slackSummaries, slackCaptures: data.slackCaptures, flags: data.flags, prs: data.prs, focus: data.focus, docs: data.docs, imports: data.imports, people: data.people, events: data.events, seen: data.seen, sheetUrl: data.meta && data.meta.sheetUrl });
       applyEdits(data.edits || []);
       saveCache();
       fresh = true;
