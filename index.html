@@ -853,6 +853,9 @@ body.people-view #scratch, body.people-view #inbox, body.people-view #timeline, 
 }
 .pp-pchip .linkish, .pp-htitle .linkish { font-size: 13px; padding: 0; }
 .pp-edit.linkish { font-size: 12px; }
+.pp-log textarea { font-size: 14px; font-weight: 400; color: var(--text); min-height: 52px; }
+.pp-evnote { font-size: 13px; color: var(--text); white-space: pre-wrap; overflow-wrap: anywhere; opacity: .85; }
+.pp-hnote { flex-basis: 100%; font-size: 12px; color: var(--muted); white-space: pre-wrap; overflow-wrap: anywhere; }
 </style>
 </head>
 <body>
@@ -5327,7 +5330,7 @@ function timeLabel(t) {
   return new Date(2000, 0, 1, p[0], p[1]).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
 }
 
-function newPDraft(date) { return { id: '', date: date || ymd(new Date()), time: '', title: '', who: [], q: '', hi: 0 }; }
+function newPDraft(date) { return { id: '', date: date || ymd(new Date()), time: '', title: '', note: '', who: [], q: '', hi: 0 }; }
 
 function whoKey(w) { return w.personId || 'n:' + w.name.toLowerCase(); }
 
@@ -5409,6 +5412,7 @@ function logFormHtml() {
     + '<div class="pp-when"><label>Day<input type="date" data-pp="date" value="' + esc(d.date) + '" required></label>'
     + '<label><span>Time <span class="muted">optional</span></span><input type="time" data-pp="time" value="' + esc(d.time) + '"></label></div>'
     + '<label>Event<input data-pp="title" data-focus="pp-title" list="pp-titles" value="' + esc(d.title) + '" placeholder="e.g. Sam\'s birthday, climbing night" autocomplete="off" enterkeyhint="next"></label>'
+    + '<label><span>Details <span class="muted">optional</span></span><textarea data-pp="note" data-focus="pp-note" rows="2" placeholder="Where, what happened, anything to remember">' + esc(d.note) + '</textarea></label>'
     + '<datalist id="pp-titles">' + titles.map((t) => '<option value="' + esc(t) + '">').join('') + '</datalist>'
     + '<div class="pp-label">People</div>'
     + (d.who.length ? '<div class="pp-who">' + d.who.map((w) => '<div class="pp-who-row">'
@@ -5443,6 +5447,7 @@ function ppTimelineHtml() {
       + '<div class="pp-evbody"><div class="pp-evhead"><span class="pp-evtitle">' + esc(e.title || 'Untitled') + '</span>'
       + (e.time ? '<span class="muted">' + esc(timeLabel(e.time)) + '</span>' : '') + '<span class="spacer"></span>'
       + '<button type="button" class="linkish pp-edit" data-action="pp-edit-event" data-id="' + e.id + '">Edit</button></div>'
+      + (e.note ? '<div class="pp-evnote">' + linkify(e.note) + '</div>' : '')
       + pChipsHtml(e) + '</div></div>';
   }).join('');
 }
@@ -5525,7 +5530,8 @@ function personDetailHtml(p) {
     + '<div class="pp-label">History</div>'
     + (x.hist.length ? '<div class="pp-hist">' + x.hist.map((h) => '<div class="pp-hrow"><span class="pp-hdate">' + esc(dateLabel(h.e.date)) + (h.e.time ? ' <span class="muted">' + esc(timeLabel(h.e.time)) + '</span>' : '') + '</span>'
       + '<span class="pp-htitle"><button type="button" class="linkish" data-action="pp-edit-event" data-id="' + h.e.id + '">' + esc(h.e.title || 'Untitled') + '</button>'
-      + (h.s.note ? '<span class="pp-pnote">' + esc(h.s.note) + '</span>' : '') + '</span></div>').join('') + '</div>' : '<div class="pp-empty">Not logged at any event yet.</div>')
+      + (h.s.note ? '<span class="pp-pnote">' + esc(h.s.note) + '</span>' : '')
+      + (h.e.note ? '<span class="pp-hnote">' + linkify(h.e.note) + '</span>' : '') + '</span></div>').join('') + '</div>' : '<div class="pp-empty">Not logged at any event yet.</div>')
     + '<div class="pp-actions"><button type="button" class="danger" data-action="pp-delete-person">Delete ' + esc(p.name || 'person') + '</button></div>'
     + '</div>';
 }
@@ -5547,7 +5553,7 @@ function savePDraft() {
   const d = pDraft;
   if (d.q.trim()) pickHighlighted();
   if (!d.date) return showToast('Pick a day first.', true);
-  if (!d.title.trim() && !d.who.length) return showToast('Add an event name or at least one person.', true);
+  if (!d.title.trim() && !d.who.length && !d.note.trim()) return showToast('Add an event name or at least one person.', true);
   let e = d.id ? pEventById(d.id) : null;
   if (!e) {
     e = normPEvent({ id: uid(), created: now() });
@@ -5556,6 +5562,7 @@ function savePDraft() {
   e.date = d.date;
   e.time = d.time;
   e.title = d.title.trim();
+  e.note = d.note.trim();
   e.updated = now();
   queueUpsert('Events', e);
   const kept = new Set();
@@ -5596,7 +5603,7 @@ function savePDraft() {
 function editPEvent(id) {
   const e = pEventById(id);
   if (!e) return;
-  pDraft = { id: e.id, date: e.date, time: e.time, title: e.title, q: '', hi: 0,
+  pDraft = { id: e.id, date: e.date, time: e.time, title: e.title, note: e.note, q: '', hi: 0,
     who: seen.filter((s) => s.eventId === e.id).map((s) => ({ personId: s.personId, name: pName(s.personId), note: s.note })) };
   pPerson = null;
   pPersonEdit = false;
@@ -5710,6 +5717,7 @@ function peopleInput(el) {
   if (k === 'date') pDraft.date = el.value;
   else if (k === 'time') pDraft.time = el.value;
   else if (k === 'title') pDraft.title = el.value;
+  else if (k === 'note') { pDraft.note = el.value; autosize(el); }
   else if (k === 'who-note') {
     const w = pDraft.who.find((x) => whoKey(x) === el.dataset.key);
     if (w) w.note = el.value;

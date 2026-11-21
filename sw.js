@@ -1,4 +1,4 @@
-const CACHE = 'threads-people-20261119';
+const CACHE = 'threads-people-20261120b';
 const SHELL = ['./', './index.html', './pwa.js', './manifest.webmanifest', './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
 
 self.addEventListener('install', (event) => {
