@@ -856,6 +856,26 @@ body.people-view #scratch, body.people-view #inbox, body.people-view #timeline, 
 .pp-log textarea { font-size: 14px; font-weight: 400; color: var(--text); min-height: 52px; }
 .pp-evnote { font-size: 13px; color: var(--text); white-space: pre-wrap; overflow-wrap: anywhere; opacity: .85; }
 .pp-hnote { flex-basis: 100%; font-size: 12px; color: var(--muted); white-space: pre-wrap; overflow-wrap: anywhere; }
+.pp-who-row .pp-wlevel { flex: none; font-size: 12px; padding: 3px 4px; border: 1px solid var(--line); border-radius: 6px; background: var(--panel); color: var(--text); }
+.pp-lvl { display: inline-flex; gap: 2px; align-items: center; margin-left: 2px; }
+.pp-lvl i { width: 5px; height: 5px; border-radius: 50%; background: var(--line); }
+.pp-lvl i.on { background: var(--accent); }
+.pp-hlvl { display: inline-flex; gap: 4px; align-items: center; font-size: 11px; color: var(--muted); }
+.pp-dot.pp-l1 { width: 8px; height: 8px; margin: -4px 0 0 -4px; opacity: .55; }
+.pp-dot.pp-l2 { width: 11px; height: 11px; margin: -5.5px 0 0 -5.5px; opacity: .75; }
+.pp-dot.pp-l3 { width: 15px; height: 15px; margin: -7.5px 0 0 -7.5px; }
+.pp-dot.pp-l4 { width: 19px; height: 19px; margin: -9.5px 0 0 -9.5px; background: var(--idea); }
+.pp-due { margin-left: 6px; font-size: 11px; font-weight: 600; }
+.pp-stats { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.pp-cadence { font-size: 14px; font-weight: 600; padding: 2px 4px; border: 1px solid var(--line); border-radius: 6px; background: var(--panel); color: var(--text); margin-top: 2px; }
+@media (max-width: 700px) {
+  .pp-who-row { flex-wrap: wrap; }
+  .pp-who-row .pp-wnote { order: 5; flex-basis: 100%; }
+  .pp-who-row .pp-chip { max-width: 55%; }
+  .pp-who-row .pp-wlevel { margin-left: auto; font-size: 14px; }
+  .pp-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .pp-due { display: block; margin-left: 0; }
+}
 </style>
 </head>
 <body>
@@ -5229,8 +5249,10 @@ setInterval(() => {
 // Sheet tabs: People (id, name, note), Events (id, date, time, title, note), Seen (id, eventId, personId, note).
 
 const PP_RANGES = { '3m': 91, '6m': 183, '1y': 365, all: 0 };
-const PP_SORTS = { since: 'Longest since', recent: 'Most recent', count: 'Most seen', name: 'Name' };
-const pui = Object.assign({ tab: 'timeline', range: '6m', sort: 'since' }, storeGet('threads-people-ui') || {});
+const PP_SORTS = { overdue: 'Most overdue', since: 'Longest since', recent: 'Most recent', count: 'Most seen', name: 'Name' };
+const PP_LEVELS = [{ label: 'Saw', hint: 'in passing, a wave' }, { label: 'Chatted', hint: 'small talk, caught up a bit' }, { label: 'Hung out', hint: 'real time together' }, { label: 'Deep', hint: 'long one-on-one, meaningful talk' }];
+const PP_CADENCE = { weekly: ['Weekly', 7], monthly: ['Monthly', 30], quarterly: ['Quarterly', 91], yearly: ['Yearly', 365] };
+const pui = Object.assign({ tab: 'timeline', range: '6m', sort: 'overdue' }, storeGet('threads-people-ui') || {});
 let pDraft = null;
 let pPerson = null;
 let pPersonEdit = false;
@@ -5259,9 +5281,9 @@ function pTime(v) {
   return '';
 }
 
-function normPerson(r) { return { id: String(r.id), name: String(r.name || '').trim(), note: String(r.note || ''), created: r.created || '', updated: r.updated || '' }; }
+function normPerson(r) { return { id: String(r.id), name: String(r.name || '').trim(), note: String(r.note || ''), cadence: PP_CADENCE[r.cadence] ? String(r.cadence) : '', created: r.created || '', updated: r.updated || '' }; }
 function normPEvent(r) { return { id: String(r.id), date: pDate(r.date), time: pTime(r.time), title: String(r.title || ''), note: String(r.note || ''), created: r.created || '', updated: r.updated || '' }; }
-function normSeen(r) { return { id: String(r.id), eventId: String(r.eventId || ''), personId: String(r.personId || ''), note: String(r.note || ''), created: r.created || '', updated: r.updated || '' }; }
+function normSeen(r) { return { id: String(r.id), eventId: String(r.eventId || ''), personId: String(r.personId || ''), note: String(r.note || ''), level: Math.max(0, Math.min(4, Math.round(num(r.level, 0)))), created: r.created || '', updated: r.updated || '' }; }
 
 function personById(id) { return people.find((p) => p.id === id) || null; }
 function pEventById(id) { return pevents.find((e) => e.id === id) || null; }
@@ -5314,7 +5336,34 @@ function sinceShort(n) {
   return (n / 365.25).toFixed(1).replace(/\.0$/, '') + 'y';
 }
 
-function staleClass(n) { return n == null ? 'pp-never' : n <= 30 ? 'pp-fresh' : n <= 90 ? 'pp-mid' : n <= 180 ? 'pp-old' : 'pp-cold'; }
+function staleClass(n, p) {
+  const cad = p && PP_CADENCE[p.cadence];
+  if (cad) return n == null ? 'pp-cold' : n <= cad[1] * 0.75 ? 'pp-fresh' : n <= cad[1] ? 'pp-old' : 'pp-cold';
+  return n == null ? 'pp-never' : n <= 30 ? 'pp-fresh' : n <= 90 ? 'pp-mid' : n <= 180 ? 'pp-old' : 'pp-cold';
+}
+
+function overdueBy(p, n) {
+  const cad = PP_CADENCE[p.cadence];
+  if (!cad) return null;
+  return n == null ? Infinity : n - cad[1];
+}
+
+function dueTag(p, n) {
+  const o = overdueBy(p, n);
+  if (o == null) return '';
+  if (o === Infinity) return '<span class="pp-due pp-cold">due now</span>';
+  return o > 0 ? '<span class="pp-due pp-cold">overdue ' + sinceShort(o) + '</span>' : '<span class="pp-due muted">due in ' + sinceShort(-o) + '</span>';
+}
+
+function levelPips(l) {
+  if (!l) return '';
+  return '<span class="pp-lvl" title="' + esc(PP_LEVELS[l - 1].label + ': ' + PP_LEVELS[l - 1].hint) + '">' + [1, 2, 3, 4].map((i) => '<i class="' + (i <= l ? 'on' : '') + '"></i>').join('') + '</span>';
+}
+
+function levelSelect(w) {
+  return '<select class="pp-wlevel" data-pp="who-level" data-key="' + esc(whoKey(w)) + '" title="How much you interacted">'
+    + '<option value="0">Level</option>' + PP_LEVELS.map((l, i) => '<option value="' + (i + 1) + '"' + (w.level === i + 1 ? ' selected' : '') + '>' + l.label + '</option>').join('') + '</select>';
+}
 
 function dateLabel(date, long) {
   if (!date) return '';
@@ -5382,14 +5431,14 @@ function addWho(id, name) {
   if (id) {
     const p = personById(id);
     if (!p || d.who.some((w) => w.personId === id)) return;
-    d.who.push({ personId: id, name: p.name, note: '' });
+    d.who.push({ personId: id, name: p.name, note: '', level: 0 });
   } else {
     name = String(name || '').trim().replace(/\s+/g, ' ');
     if (!name) return;
     const ex = people.find((p) => p.name.toLowerCase() === name.toLowerCase());
     if (ex) return addWho(ex.id);
     if (d.who.some((w) => w.name.toLowerCase() === name.toLowerCase())) return;
-    d.who.push({ personId: '', name, note: '' });
+    d.who.push({ personId: '', name, note: '', level: 0 });
   }
 }
 
@@ -5418,6 +5467,7 @@ function logFormHtml() {
     + (d.who.length ? '<div class="pp-who">' + d.who.map((w) => '<div class="pp-who-row">'
       + '<span class="pp-chip' + (w.personId ? '' : ' new') + '" title="' + (w.personId ? '' : 'New person, added when you save') + '">' + esc(w.name) + (w.personId ? '' : ' <small>new</small>') + '</span>'
       + '<input class="pp-wnote" data-pp="who-note" data-key="' + esc(whoKey(w)) + '" data-focus="pp-who:' + esc(whoKey(w)) + '" value="' + esc(w.note) + '" placeholder="note (optional)" autocomplete="off" enterkeyhint="next">'
+      + levelSelect(w)
       + '<button type="button" class="x" data-action="pp-who-remove" data-key="' + esc(whoKey(w)) + '" title="Remove">x</button></div>').join('') + '</div>' : '')
     + '<div class="pp-add"><input data-pp="q" data-focus="pp-q" value="' + esc(d.q) + '" placeholder="Type a name, Enter to add" autocomplete="off" autocapitalize="words" enterkeyhint="enter">'
     + '<div id="pp-sugg">' + pSuggHtml() + '</div></div>'
@@ -5430,7 +5480,7 @@ function pChipsHtml(e) {
   const rows = seen.filter((s) => s.eventId === e.id).sort((a, b) => pName(a.personId).localeCompare(pName(b.personId)));
   if (!rows.length) return '<div class="muted pp-none">No one added</div>';
   return '<div class="pp-chips">' + rows.map((s) => '<span class="pp-pchip"><button type="button" class="linkish" data-action="pp-person" data-id="' + s.personId + '">' + esc(pName(s.personId)) + '</button>'
-    + (s.note ? '<span class="pp-pnote">' + esc(s.note) + '</span>' : '') + '</span>').join('') + '</div>';
+    + levelPips(s.level) + (s.note ? '<span class="pp-pnote">' + esc(s.note) + '</span>' : '') + '</span>').join('') + '</div>';
 }
 
 function ppTimelineHtml() {
@@ -5482,13 +5532,13 @@ function lanesHtml_people() {
     const x = st.get(p.id);
     const n = daysSince(x.last);
     const dots = x.hist.filter((h) => pDay(h.e.date) >= start && pDay(h.e.date) <= end).map((h) =>
-      '<button type="button" class="pp-dot" style="left:' + pct(pDay(h.e.date)) + '" data-action="pp-edit-event" data-id="' + h.e.id + '" title="' + esc(dateLabel(h.e.date, true) + ' - ' + (h.e.title || 'Untitled') + (h.s.note ? '\n' + h.s.note : '')) + '"></button>').join('');
+      '<button type="button" class="pp-dot pp-l' + h.s.level + '" style="left:' + pct(pDay(h.e.date)) + '" data-action="pp-edit-event" data-id="' + h.e.id + '" title="' + esc(dateLabel(h.e.date, true) + ' - ' + (h.e.title || 'Untitled') + (h.s.note ? '\n' + h.s.note : '') + (h.s.level ? '\n' + PP_LEVELS[h.s.level - 1].label : '')) + '"></button>').join('');
     return '<div class="pp-lane"><button type="button" class="pp-lname" data-action="pp-person" data-id="' + p.id + '"><span>' + esc(p.name) + '</span>'
-      + '<span class="pp-since ' + staleClass(n) + '">' + sinceShort(n) + '</span></button>'
+      + '<span class="pp-since ' + staleClass(n, p) + '">' + sinceShort(n) + '</span></button>'
       + '<div class="pp-track">' + grid + dots + '</div></div>';
   }).join('');
   return '<div class="pp-lanes-bar"><span class="seg">' + Object.keys(PP_RANGES).map((k) => '<button type="button" data-action="pp-range" data-range="' + k + '" class="' + (pui.range === k ? 'on' : '') + '">' + (k === 'all' ? 'All' : k) + '</button>').join('') + '</span>'
-    + '<span class="muted">Tap a dot to open that event</span></div>'
+    + '<span class="muted">Bigger dot = more time together. Tap one to open it.</span></div>'
     + '<div class="pp-lanes"><div class="pp-lanes-inner"><div class="pp-lane pp-axis"><span class="pp-lname"></span><div class="pp-track">' + tickHtml + '</div></div>' + rows + '</div></div>';
 }
 
@@ -5496,7 +5546,9 @@ function peopleListHtml() {
   const st = pStats();
   const q = pFilter.trim().toLowerCase();
   const list = people.filter((p) => !q || p.name.toLowerCase().includes(q));
+  const od = (p) => { const o = overdueBy(p, daysSince(st.get(p.id).last)); return o == null ? -1e9 : o / PP_CADENCE[p.cadence][1]; };
   const cmp = {
+    overdue: (a, b) => od(b) - od(a) || ((st.get(a.id).last || '0') < (st.get(b.id).last || '0') ? -1 : 1),
     since: (a, b) => (st.get(a.id).last || '0') < (st.get(b.id).last || '0') ? -1 : (st.get(a.id).last || '0') > (st.get(b.id).last || '0') ? 1 : a.name.localeCompare(b.name),
     recent: (a, b) => (st.get(a.id).last || '0') > (st.get(b.id).last || '0') ? -1 : (st.get(a.id).last || '0') < (st.get(b.id).last || '0') ? 1 : a.name.localeCompare(b.name),
     count: (a, b) => st.get(b.id).count - st.get(a.id).count || a.name.localeCompare(b.name),
@@ -5510,7 +5562,7 @@ function peopleListHtml() {
       const n = daysSince(x.last);
       return '<button type="button" class="pp-prow" data-action="pp-person" data-id="' + p.id + '"><span class="pp-pname">' + esc(p.name || 'Unnamed') + '</span>'
         + '<span class="pp-plast muted">' + (x.last ? dateLabel(x.last) : '') + '</span>'
-        + '<span class="pp-since ' + staleClass(n) + '">' + esc(x.last ? sinceLabel(n) : 'not seen yet') + '</span>'
+        + '<span class="pp-since ' + staleClass(n, p) + '">' + esc(x.last ? sinceLabel(n) : 'not seen yet') + dueTag(p, n) + '</span>'
         + '<span class="pp-count muted" title="Times seen">' + x.count + 'x</span></button>';
     }).join('') + '</div>' : '<div class="pp-empty">' + (people.length ? 'No one matches.' : 'People you add in the form show up here.') + '</div>');
 }
@@ -5523,13 +5575,15 @@ function personDetailHtml(p) {
     + (pPersonEdit ? '<input class="pp-pname-input" data-pp="person-name" data-focus="pp-pname" value="' + esc(p.name) + '" autocomplete="off">'
       : '<h2 data-action="pp-rename" title="Click to rename">' + esc(p.name || 'Unnamed') + '</h2>')
     + '<span class="spacer"></span><button type="button" class="primary" data-action="pp-log-with" data-id="' + p.id + '">+ Log seeing ' + esc(p.name.split(' ')[0] || 'them') + '</button></div>'
-    + '<div class="pp-stats"><div><span class="muted">Last seen</span><b class="' + staleClass(n) + '">' + esc(x.last ? sinceLabel(n) : 'not yet') + '</b>' + (x.last ? '<span class="muted">' + esc(dateLabel(x.last, true)) + '</span>' : '') + '</div>'
+    + '<div class="pp-stats"><div><span class="muted">Last seen</span><b class="' + staleClass(n, p) + '">' + esc(x.last ? sinceLabel(n) : 'not yet') + '</b>' + (x.last ? '<span class="muted">' + esc(dateLabel(x.last, true)) + '</span>' : '') + dueTag(p, n) + '</div>'
+    + '<div><span class="muted">Aim to see them</span><select data-pp="cadence" class="pp-cadence"><option value="">No goal</option>'
+      + Object.keys(PP_CADENCE).map((k) => '<option value="' + k + '"' + (p.cadence === k ? ' selected' : '') + '>' + PP_CADENCE[k][0] + '</option>').join('') + '</select></div>'
     + '<div><span class="muted">Times seen</span><b>' + x.count + '</b></div>'
     + '<div><span class="muted">First logged</span><b>' + esc(x.first ? dateLabel(x.first, true) : '-') + '</b></div></div>'
     + '<label class="pp-about">About<textarea data-pp="person-note" data-focus="pp-pnote" rows="1" placeholder="Anything to remember (how you met, partner, kids, interests...)">' + esc(p.note) + '</textarea></label>'
     + '<div class="pp-label">History</div>'
     + (x.hist.length ? '<div class="pp-hist">' + x.hist.map((h) => '<div class="pp-hrow"><span class="pp-hdate">' + esc(dateLabel(h.e.date)) + (h.e.time ? ' <span class="muted">' + esc(timeLabel(h.e.time)) + '</span>' : '') + '</span>'
-      + '<span class="pp-htitle"><button type="button" class="linkish" data-action="pp-edit-event" data-id="' + h.e.id + '">' + esc(h.e.title || 'Untitled') + '</button>'
+      + '<span class="pp-htitle"><button type="button" class="linkish" data-action="pp-edit-event" data-id="' + h.e.id + '">' + esc(h.e.title || 'Untitled') + '</button>' + (h.s.level ? '<span class="pp-hlvl">' + levelPips(h.s.level) + PP_LEVELS[h.s.level - 1].label + '</span>' : '')
       + (h.s.note ? '<span class="pp-pnote">' + esc(h.s.note) + '</span>' : '')
       + (h.e.note ? '<span class="pp-hnote">' + linkify(h.e.note) + '</span>' : '') + '</span></div>').join('') + '</div>' : '<div class="pp-empty">Not logged at any event yet.</div>')
     + '<div class="pp-actions"><button type="button" class="danger" data-action="pp-delete-person">Delete ' + esc(p.name || 'person') + '</button></div>'
@@ -5585,8 +5639,10 @@ function savePDraft() {
       seen.push(s);
     }
     const note = String(w.note || '').trim();
-    if (s.note !== note || !s.updated) {
+    const level = Number(w.level) || 0;
+    if (s.note !== note || s.level !== level || !s.updated) {
       s.note = note;
+      s.level = level;
       s.updated = now();
       queueUpsert('Seen', s);
     }
@@ -5604,7 +5660,7 @@ function editPEvent(id) {
   const e = pEventById(id);
   if (!e) return;
   pDraft = { id: e.id, date: e.date, time: e.time, title: e.title, note: e.note, q: '', hi: 0,
-    who: seen.filter((s) => s.eventId === e.id).map((s) => ({ personId: s.personId, name: pName(s.personId), note: s.note })) };
+    who: seen.filter((s) => s.eventId === e.id).map((s) => ({ personId: s.personId, name: pName(s.personId), note: s.note, level: s.level })) };
   pPerson = null;
   pPersonEdit = false;
   render();
@@ -5721,6 +5777,9 @@ function peopleInput(el) {
   else if (k === 'who-note') {
     const w = pDraft.who.find((x) => whoKey(x) === el.dataset.key);
     if (w) w.note = el.value;
+  } else if (k === 'who-level') {
+    const w = pDraft.who.find((x) => whoKey(x) === el.dataset.key);
+    if (w) w.level = Number(el.value) || 0;
   } else if (k === 'q') {
     pDraft.q = el.value;
     pDraft.hi = 0;
@@ -5743,7 +5802,15 @@ function peopleInput(el) {
 
 function peopleChange(el) {
   const k = el.dataset.pp;
-  if (k === 'date' || k === 'time') return peopleInput(el);
+  if (k === 'date' || k === 'time' || k === 'who-level') return peopleInput(el);
+  if (k === 'cadence') {
+    const p = personById(pPerson);
+    if (!p) return;
+    p.cadence = PP_CADENCE[el.value] ? el.value : '';
+    p.updated = now();
+    queueUpsert('People', p);
+    return render();
+  }
   if (k === 'sort') {
     pui.sort = el.value;
     savePui();
